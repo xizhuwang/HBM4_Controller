@@ -8,15 +8,17 @@ The course treats every exercise as an executable contract. A release is accepte
 pnpm test
 ```
 
-The current suite performs 177 checks across 40 bilingual challenges:
+The current suite performs 230 checks across 30 bilingual advanced challenges:
 
-- challenge IDs and order are unique and the expected count is exactly 40;
+- challenge IDs and order are unique, contiguous, and the expected count is exactly 30;
+- none of the foundation challenge IDs from `rtl-interview-lab` are reused;
+- every protocol track has a multi-stage path and a complete architecture diagram;
+- every lab resolves to a highlighted block, explains why it exists, states the PHY/analog boundary, and includes senior design-review questions;
 - every challenge has Chinese and English content, specifications, test groups, hints, starter code, and an explicit judge type;
 - all simulation reference solutions compile and pass their self-checking testbench;
 - intentionally incomplete starter implementations fail rather than receiving false passes;
 - timeout/watchdog handling rejects non-terminating simulations;
 - VCD-producing exercises emit parseable waveform data;
-- CNF/SAT, structural, and UVM-structure exercises execute their dedicated judge path;
 - browser engine manifests, integrity metadata, and licenses are present.
 
 ## Production build
@@ -36,7 +38,7 @@ Before tagging a release, check both desktop and narrow/mobile widths:
 2. Track filtering and text search select only matching challenges.
 3. Editing and reset work without navigating away.
 4. A correct RTL solution passes; a syntax error reports a compile failure; a functional error reports a simulation failure.
-5. VCD labs render expected signal transitions.
+5. Every lab produces a downloadable VCD with expected signal transitions.
 6. Yosys reports generic cells for the user and reference implementation.
 7. Reload preserves local progress and edited code.
 8. The site works under `/HBM4_Controller/`, not only at domain root.

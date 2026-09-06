@@ -4,7 +4,7 @@
 
 ## 繁體中文
 
-這是一套可直接在瀏覽器撰寫、編譯、模擬與檢視波形的 Controller RTL 互動式課程。專案由 26 題 RTL／CDC／timing／SoC／verification／PPA 基礎題，加上 14 題 DRAM／HBM／LPDDR／GDDR／PCIe controller 題組成，共 40 題。
+這是一套可直接在瀏覽器撰寫、編譯與模擬的進階 Controller RTL 互動式課程，共 30 題。基礎 RTL 題保留在獨立的 `rtl-interview-lab`；本專案不重複那些題目，只聚焦 DRAM／HBM／LPDDR／GDDR／PCIe 的專用電路、子系統整合與 controller capstone。
 
 它的目標不是用「做完題目」取代工作年資，而是把面試與實務會要求的能力變成可重現證據：規格拆解、cycle-accurate RTL、protocol/timing guard、self-checking testbench、波形除錯、合成比較，以及 sign-off 邊界判斷。
 
@@ -14,15 +14,11 @@
 
 | 路徑 | 主題 | 代表題目 |
 |---|---|---|
-| RTL 基礎 | edge detect、counter、latch/debug | reset、邊界與完整賦值 |
-| CDC/RDC | 2-FF、reset release、toggle、Gray pointer、async FIFO | metastability containment、bus coherence |
-| Timing/PPA | pipeline、balanced tree、valid/tag retiming、hold repair | latency contract、max/min timing、generic synthesis |
-| SoC/AXI | APB、AXI4-Lite、AXI read burst、SRAM wrapper、arbitration | back-pressure、memory-mapped control、IP integration |
-| DRAM | address mapping、per-bank FSM、tRCD guard、FR-FCFS、refresh deadline、write draining | command legality、scheduler policy、refresh correctness |
-| HBM | pseudo-channel mapping、bank-group tCCD | channel hierarchy、same/different bank-group constraints |
-| LPDDR/GDDR | low-power sequence、read/write turnaround | power isolation ordering、direction-change timing |
-| PCIe | credit manager、tag tracker、replay timer | flow control、non-posted tracking、reliability |
-| Verification | scoreboard、formal miter、SAT/CNF、UVM structure、exactly-once completion | assertion mindset、transaction accounting |
+| DRAM（8 題） | mapping、bank FSM、timing wheel、FR-FCFS、refresh、write drain、command generator | legality 與 policy 分層，組成單 bank issue path |
+| HBM（5 題） | pseudo-channel mapping、bank-group timing、階層仲裁、獨立 refresh domain、channel capstone | 可擴展 channel／PC／bank 層級，不做巨大扁平 arbiter |
+| LPDDR（4 題） | 低功耗序列、初始化/training handshake、DVFS quiesce、controller gate | traffic drain、power/isolation 與 PHY status 的安全順序 |
+| GDDR（4 題） | bus turnaround、command parity、CRC retry ownership、issue capstone | 高速共享資料匯流排與可靠度責任 |
+| PCIe（9 題） | TLP route、credits、tags、replay、completion reorder、LTSSM、admission capstone | Transaction/Data Link/MAC 分層與資源原子配置 |
 
 完整的修課順序、每階段輸出與面試證據請見 [課程地圖](docs/CURRICULUM.md)。
 
@@ -30,7 +26,7 @@
 
 - 繁體中文／英文題目、規格、提示與職務對應。
 - 瀏覽器內 Icarus Verilog 編譯與 self-checking simulation。
-- VCD 波形檢視，讓失敗能以 cycle-by-cycle 訊號證明。
+- 每題都產生 VCD，可下載後用 GTKWave 等工具做 cycle-by-cycle 除錯。
 - 瀏覽器內 Yosys generic-cell 統計，用同一工具版本比較 RTL 相對複雜度。
 - localStorage 保存程式、分數與完成進度；沒有上傳程式碼的後端。
 - GitHub Pages 自動執行完整 regression、production build 與 release audit 後才部署。
@@ -52,7 +48,7 @@ pnpm dev
 
 1. 在 repository 的 **Settings → Pages → Build and deployment** 選擇 **GitHub Actions**。
 2. push 到 `main`。
-3. `.github/workflows/deploy-pages.yml` 會依序執行 install、177 項課程 regression、GitHub Pages build、release audit，成功後部署 `gh-pages/`。
+3. `.github/workflows/deploy-pages.yml` 會依序執行 install、230 項課程 regression、GitHub Pages build、release audit，成功後部署 `gh-pages/`。
 
 若 repository 改名，請同步修改 `vite.github.config.ts` 的 `base`。
 
@@ -66,7 +62,7 @@ pnpm dev
 
 ## English
 
-Memory Controller RTL Lab is a browser-based course for writing, compiling, simulating, debugging, and comparing controller RTL. It contains 40 challenges: 26 foundations in RTL, CDC, timing, SoC integration, verification, and PPA, plus 14 controller labs covering DRAM, HBM, LPDDR, GDDR, and PCIe.
+Memory Controller RTL Lab is a browser-based advanced course for writing, compiling, simulating, debugging, and reviewing controller RTL. Its 30 labs are distinct from the foundation exercises in `rtl-interview-lab` and cover DRAM, HBM, LPDDR, GDDR, and PCIe from focused blocks through controller capstones.
 
 The course produces reproducible evidence of specification decomposition, cycle-accurate RTL, protocol and timing guards, self-checking verification, waveform debugging, and synthesis reasoning. It does not claim that completing a challenge set substitutes for senior-level project ownership.
 

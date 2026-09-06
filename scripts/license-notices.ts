@@ -14,10 +14,23 @@ export function licenseNotices(): Plugin {
         while (directory.includes('node_modules')) {
           const manifest = path.join(directory, 'package.json');
           if (fs.existsSync(manifest)) {
-            const pkg = JSON.parse(fs.readFileSync(manifest, 'utf8')) as { name: string; version: string };
+            const pkg = JSON.parse(fs.readFileSync(manifest, 'utf8')) as {
+              name?: string;
+              version?: string;
+              license?: string;
+            };
+            if (!pkg.name || !pkg.version) {
+              directory = path.dirname(directory);
+              continue;
+            }
             const names = fs.readdirSync(directory).filter((name) => /^(licen[sc]e|copying|notice)(\.|$)/i.test(name) && fs.statSync(path.join(directory, name)).isFile());
-            if (!names.length) this.error(`Missing runtime license: ${pkg.name}. Review before publishing.`);
-            packages.set(`${pkg.name}@${pkg.version}`, names.map((name) => fs.readFileSync(path.join(directory, name), 'utf8')).join('\n'));
+            if (!names.length && !pkg.license) {
+              this.error(`Missing runtime license declaration: ${pkg.name}. Review before publishing.`);
+            }
+            const notice = names.length
+              ? names.map((name) => fs.readFileSync(path.join(directory, name), 'utf8')).join('\n')
+              : `Declared license: ${pkg.license}\nSource: ${pkg.name} package.json`;
+            packages.set(`${pkg.name}@${pkg.version}`, notice);
             break;
           }
           directory = path.dirname(directory);

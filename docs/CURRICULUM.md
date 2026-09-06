@@ -1,101 +1,91 @@
-# Controller RTL curriculum
+# Advanced controller RTL curriculum
 
-This curriculum turns the 40 browser exercises into an implementation and interview portfolio. The ordering is intentional: do not begin the protocol-specific labs until the underlying CDC, transaction, and timing contracts are understood.
+This is the second-stage course after `rtl-interview-lab`. It intentionally does not repeat generic counters, FIFOs, CDC synchronizers, AXI register slices, introductory verification, or other foundation exercises. The 30 labs turn those prerequisites into memory and PCIe controller mechanisms.
 
-## Stage 1 — Deterministic RTL
+## How to complete a lab
 
-Complete exercises 1–3, then write a one-page microarchitecture note for each module containing interface timing, reset behavior, state, corner cases, and one rejected alternative.
+A passing testbench is only the first gate. For every lab, produce five pieces of evidence:
 
-Exit evidence:
+1. a cycle-accurate interface and state contract;
+2. a failing waveform and its root cause;
+3. the corrected RTL and passing regression;
+4. answers to the two design-review questions in the site;
+5. one assertion, one cover scenario, and one PPA or scalability trade-off.
 
-- no inferred latch or accidental wrap-around;
-- cycle-by-cycle explanation of nonblocking assignment semantics;
-- a self-checking testbench that detects the original defect.
+This is what makes the work useful in an interview: you can explain why the block exists, where it sits, which state it owns, what must never happen, and where the digital controller ends at the PHY boundary.
 
-## Stage 2 — CDC and reset ownership
+## Stage 1 — Generic DRAM command core (labs 1–8)
 
-Complete exercises 4–8 and the async FIFO exercise. Draw the source and destination clock domains, synchronizer placement, reconvergence risks, reset convergence, and assumptions on event rate.
+Build the path:
 
-Exit evidence:
-
-- can distinguish a level, pulse, counter, and multi-bit data crossing;
-- can explain why two flip-flops reduce metastability propagation but do not make buses coherent;
-- can state what must be constrained and reviewed by CDC/RDC tools.
-
-## Stage 3 — Timing, latency, and PPA
-
-Complete exercises 9–12 and the PPA exercises. For each transformation, document the external latency contract and whether throughput changed.
+`address mapping → bank metadata → tRCD/timing deadlines → legal-candidate filtering → FR-FCFS/write drain/refresh policy → PRE/ACT/RD command generation`
 
 Exit evidence:
 
-- can diagnose setup versus hold without proposing a frequency change for hold;
-- keeps data, valid, ID, tag, byte enable, and error metadata aligned;
-- treats generic cell count as a relative experiment, not process area.
+- separate correctness constraints from performance policy;
+- update timing state only on accepted command issue;
+- explain timestamp, countdown, and shift-register implementations;
+- define refresh deadline, starvation, row-hit, and bus-direction priorities;
+- show how one-bank logic replicates and how global shared constraints are added.
 
-## Stage 4 — SoC and AXI integration
+## Stage 2 — HBM hierarchy (labs 9–13)
 
-Complete APB, arbitration, AXI4-Lite, AXI burst, and SRAM-wrapper exercises. Extend one block with sticky error status, interrupt clear semantics, and illegal-access handling.
+Build the path:
 
-Exit evidence:
-
-- handles independent AXI address/data handshakes and back-pressure;
-- separates control plane, data plane, and completion/error reporting;
-- can define a register map consumable by RTL, DV, firmware, and documentation.
-
-## Stage 5 — DRAM controller core
-
-Complete address mapping, bank FSM, tRCD, FR-FCFS, refresh deadline, and write-drain exercises.
-
-Build a design document that traces each candidate command through:
-
-`request admission → address decode → queue → bank state → timing scoreboards → refresh arbitration → command issue → response`
+`channel/PC decode → per-PC queues → per-bank/BG legality → local winner → hierarchical arbitration → independent refresh masks → channel issue`
 
 Exit evidence:
 
-- distinguishes correctness constraints from performance policy;
-- never allows row-hit preference to violate age, refresh, or timing requirements;
-- explains global, rank/channel, bank-group, and per-bank timing state;
-- defines progress/fairness properties, saturation rules, and recovery behavior.
+- explain why a flat 1024-bank arbiter is a timing and routing problem;
+- identify per-bank, per-bank-group, per-PC, per-channel, and stack-wide state;
+- prove one-hot issue and no issue from a timing- or refresh-blocked domain;
+- propose pipeline cuts and explain how priority snapshots survive them;
+- distinguish HBM controller RTL from PHY, microbump, interposer, SI/PI, and thermal work.
 
-## Stage 6 — HBM, LPDDR, and GDDR specialization
+## Stage 3 — LPDDR control plane (labs 14–17)
 
-Complete pseudo-channel mapping, bank-group spacing, LPDDR power sequencing, and GDDR turnaround.
+Build the path:
 
-Exit evidence:
-
-- treats HBM pseudo-channels as a scheduling hierarchy, not merely address bits;
-- maintains same/different bank-group timing without a monolithic 1024-bank comparator;
-- orders drain, clock gating, isolation, power state, power-good, and restore safely;
-- distinguishes controller RTL from PHY training and analog/package responsibilities.
-
-The numeric delays in the labs are reduced educational profiles. Product values must come from the licensed standard, selected speed bin, vendor PHY contract, operating corner, and system configuration.
-
-## Stage 7 — PCIe controller mechanisms
-
-Complete flow-control credit, tag tracking, and replay timer exercises. Then define three independent accounting domains: posted, non-posted, and completion traffic.
+`initialization/training contract → request admission → scheduler drain → low-power/DVFS handshake → DFI/PHY status → normal operation`
 
 Exit evidence:
 
-- cannot underflow advertised credits;
-- detects duplicate allocation, unknown completion, and exactly-once violations;
-- can explain sequence/replay responsibility and timer priority;
-- knows that these exercises cover controller mechanisms, not a complete PCIe transaction/data-link/physical-layer implementation or compliance claim.
+- order clock gating, isolation, power, power-good, and restore safely;
+- demonstrate that accepted work drains before sleep or frequency change;
+- define timeout, retry, rollback, and firmware-visible error behavior;
+- identify retention state and CDC/RDC crossings;
+- explain which training behavior is digital sequencing and which belongs in the PHY.
 
-## Stage 8 — Verification ownership
+## Stage 4 — GDDR high-speed data path (labs 18–21)
 
-Complete scoreboard, formal miter, CNF/SAT, UVM-structure, bit-true, and completion-checker exercises.
+Build the path:
 
-For a portfolio release, attach:
+`bank-aware scheduler → asymmetric direction guard → command parity → CRC retry ownership → PHY-ready commit gate`
 
-- requirement-to-test traceability table;
-- assertion list and cover properties;
-- directed corner-case matrix and constrained-random plan;
-- coverage closure note;
-- lint/CDC/RDC/formal/synthesis/STA summaries;
-- one root-cause report with failing waveform, minimal reproducer, fix, and regression test.
+Exit evidence:
 
-## Capstone expected of an experienced candidate
+- derive turnaround from command/data edges and burst behavior;
+- preserve payload ownership until ACK and replay the identical transaction;
+- define retry priority and avoid deadlock or starvation;
+- explain parity/CRC coverage limits and error escalation;
+- separate logical reliability state from IO sampling, equalization, and channel margin.
 
-Implement a parameterized, single-channel controller subsystem with AXI request acceptance, address mapping, read/write queues, per-bank state, hierarchical timing guards, refresh, write draining, tagged completion, CSR/error reporting, and bindable assertions. Verify it against a behavioral memory model and a transaction-level reference scheduler.
+## Stage 5 — PCIe layered controller (labs 22–30)
 
-The capstone is “interview-complete” when another engineer can clone the repository, run one command, reproduce every result, and trace each important behavior to a written requirement. It becomes a silicon sign-off candidate only after the gates in `SIGNOFF_BOUNDARY.md` are satisfied for a real technology, PHY, package, and product configuration.
+Build the path:
+
+`AXI/DMA request → TLP route → flow-control credit + tag atomic admission → DLL sequence/replay → completion match/reorder → LTSSM traffic gate → response`
+
+Exit evidence:
+
+- keep Transaction Layer, Data Link Layer, LTSSM/MAC, and PIPE responsibilities separate;
+- account independently for posted, non-posted, and completion resources;
+- prove no credit underflow, no duplicate tag ownership, and exactly-once completion;
+- explain replay as retransmission of the same packet rather than a new transaction;
+- define reset, FLR, Recovery, timeout, late completion, and malformed-packet behavior.
+
+## Senior-level portfolio gate
+
+Completing the site is evidence of senior-oriented practice, not an automatic job-title guarantee; it should be accompanied by an integration repository. Compose the capstone blocks into a parameterized controller subsystem with CSRs, error telemetry, assertions, a behavioral PHY/memory/link model, requirement-to-test traceability, constrained-random planning, lint/CDC/RDC/formal/synthesis/STA reports, and one written root-cause investigation.
+
+The repository can reach an RTL/DV sign-off-candidate baseline. A silicon claim additionally needs the licensed product standard and errata, actual PHY/DFI/PIPE contract, technology libraries, UPF/DFT/APR/MMMC sign-off, package/interposer and SI/PI/thermal models, compliance testing, and organizational approval described in `SIGNOFF_BOUNDARY.md`.
