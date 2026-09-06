@@ -8,12 +8,14 @@ The course treats every exercise as an executable contract. A release is accepte
 pnpm test
 ```
 
-The current suite performs 230 checks across 30 bilingual advanced challenges:
+The current suite performs 410 checks across 30 bilingual advanced challenges:
 
 - challenge IDs and order are unique, contiguous, and the expected count is exactly 30;
 - none of the foundation challenge IDs from `rtl-interview-lab` are reused;
 - every protocol track has a multi-stage path and a complete architecture diagram;
 - every lab resolves to a highlighted block, explains why it exists, states the PHY/analog boundary, and includes senior design-review questions;
+- every lab has a complete implementation micro-spec, at least one cycle example, and ordered behavior rules;
+- every Verilog port parsed from the starter module has a bilingual definition, with no nonexistent “ghost” ports in the spec;
 - every challenge has Chinese and English content, specifications, test groups, hints, starter code, and an explicit judge type;
 - all simulation reference solutions compile and pass their self-checking testbench;
 - intentionally incomplete starter implementations fail rather than receiving false passes;

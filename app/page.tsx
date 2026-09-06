@@ -4,11 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity, BookOpen, Boxes, Check, CheckCircle2, ChevronRight, Circle, Clock3,
   Code2, Cpu, ExternalLink, FileCode2, Gauge, GraduationCap, Languages,
-  Lightbulb, LoaderCircle, Map, Play, RotateCcw, Search, ShieldAlert,
+  Lightbulb, LoaderCircle, Map, Play, RotateCcw, ScrollText, Search, ShieldAlert,
   TerminalSquare, TestTube2, Trophy, XCircle,
 } from 'lucide-react';
 
 import { ArchitectureDiagram } from '@/components/architecture-diagram';
+import { LabSpecSheet } from '@/components/lab-spec-sheet';
 import { RtlEditor } from '@/components/rtl-editor';
 import { WaveformViewer } from '@/components/waveform-viewer';
 import { labContext } from '@/lib/architectures';
@@ -16,7 +17,7 @@ import { challenges, difficultyLabel, localize, tracks, type Locale, type TrackI
 
 type Result = { ok: boolean; phase: string; console: string; elapsedMs?: number };
 type AreaResult = { total: number; referenceTotal: number | null; elapsedMs: number };
-type ViewMode = 'lab' | 'architecture' | 'review';
+type ViewMode = 'spec' | 'lab' | 'architecture' | 'review';
 
 const storageKeys = { locale: 'controller-academy:v2:locale', solved: 'controller-academy:v2:solved', code: 'controller-academy:v2:solutions' };
 const storage = {
@@ -27,7 +28,7 @@ const storage = {
 const copy = {
   zh: {
     product: 'Controller RTL Academy', subtitle: '獨立進階課程 · 不重複 RTL Interview Lab', search: '搜尋進階題目', curriculum: 'Controller 路徑', all: '全部', progress: '完成進度',
-    lab: 'RTL 工作台', architecture: '架構與原理', review: 'Design Review', run: '執行 Regression', running: '模擬中…', synth: 'Generic Synthesis', reset: '重設 Starter',
+    spec: 'SPEC 與時序', lab: 'RTL 工作台', architecture: '架構與原理', review: 'Design Review', run: '執行 Regression', running: '模擬中…', synth: 'Generic Synthesis', reset: '重設 Starter',
     why: '為什麼一定要做', placement: '它在 Controller 哪裡', boundary: '數位／類比邊界', requirements: '可執行規格', tests: '驗收條件', hints: '分層提示',
     result: 'Regression Console', waiting: '修改 RTL 後執行 regression；編譯、錯誤與波形會留在這裡。', passed: '功能 Regression 通過', failed: '尚未通過',
     evidence: '你必須能提出的證據', questions: '資深工程師應能回答', next: '下一題', source: 'GitHub', local: '程式與進度只存在此瀏覽器；禁止貼公司或 NDA RTL。',
@@ -35,7 +36,7 @@ const copy = {
   },
   en: {
     product: 'Controller RTL Academy', subtitle: 'Independent advanced course · no RTL Interview Lab duplicates', search: 'Search advanced labs', curriculum: 'Controller paths', all: 'All', progress: 'Progress',
-    lab: 'RTL Workbench', architecture: 'Architecture & Why', review: 'Design Review', run: 'Run Regression', running: 'Simulating…', synth: 'Generic Synthesis', reset: 'Reset Starter',
+    spec: 'Spec & Timing', lab: 'RTL Workbench', architecture: 'Architecture & Why', review: 'Design Review', run: 'Run Regression', running: 'Simulating…', synth: 'Generic Synthesis', reset: 'Reset Starter',
     why: 'Why this block exists', placement: 'Where it sits', boundary: 'Digital / analog boundary', requirements: 'Executable requirements', tests: 'Acceptance tests', hints: 'Layered hints',
     result: 'Regression Console', waiting: 'Edit the RTL and run regression. Compile errors, failures, and waveforms stay here.', passed: 'Functional regression passed', failed: 'Not passed',
     evidence: 'Evidence you must produce', questions: 'Questions an experienced owner must answer', next: 'Next lab', source: 'GitHub', local: 'Code and progress remain in this browser. Never paste company or NDA RTL.',
@@ -55,7 +56,7 @@ export default function Home() {
   const [selectedId, setSelectedId] = useState(challenges[0].id);
   const [track, setTrack] = useState<TrackId | 'all'>('all');
   const [query, setQuery] = useState('');
-  const [view, setView] = useState<ViewMode>('lab');
+  const [view, setView] = useState<ViewMode>('spec');
   const [solutions, setSolutions] = useState<Record<string, string>>({});
   const [solved, setSolved] = useState<string[]>([]);
   const [result, setResult] = useState<Result | null>(null);
@@ -127,7 +128,7 @@ export default function Home() {
   }, [current.id, markSolved]);
 
   const selectChallenge = (id: string) => {
-    setSelectedId(id); setResult(null); setWaveform(''); setArea(null); setHintCount(0); setShowReference(false); setView('lab');
+    setSelectedId(id); setResult(null); setWaveform(''); setArea(null); setHintCount(0); setShowReference(false); setView('spec');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const updateCode = (value: string) => {
@@ -164,7 +165,9 @@ export default function Home() {
 
         <section className="workbench">
           <div className="lesson-heading"><div><div className="lesson-meta"><span>{current.track.toUpperCase()}</span><span>{localize(difficultyLabel[current.difficulty], locale)}</span><span><Clock3 />{current.minutes} min</span><span>+{current.points} pts</span></div><h2>{localize(current.title, locale)}</h2><p>{localize(current.description, locale)}</p></div><button type="button" className="next-button" onClick={() => selectChallenge(nextChallenge.id)}>{text.next}<ChevronRight /></button></div>
-          <div className="view-tabs" role="tablist" aria-label="Lesson view"><button type="button" role="tab" aria-selected={view === 'lab'} onClick={() => setView('lab')}><Code2 />{text.lab}</button><button type="button" role="tab" aria-selected={view === 'architecture'} onClick={() => setView('architecture')}><Map />{text.architecture}</button><button type="button" role="tab" aria-selected={view === 'review'} onClick={() => setView('review')}><GraduationCap />{text.review}</button></div>
+          <div className="view-tabs" role="tablist" aria-label="Lesson view"><button type="button" role="tab" aria-selected={view === 'spec'} onClick={() => setView('spec')}><ScrollText />{text.spec}</button><button type="button" role="tab" aria-selected={view === 'lab'} onClick={() => setView('lab')}><Code2 />{text.lab}</button><button type="button" role="tab" aria-selected={view === 'architecture'} onClick={() => setView('architecture')}><Map />{text.architecture}</button><button type="button" role="tab" aria-selected={view === 'review'} onClick={() => setView('review')}><GraduationCap />{text.review}</button></div>
+
+          {view === 'spec' && <LabSpecSheet challenge={current} locale={locale} onStart={() => setView('lab')} />}
 
           {view === 'lab' && <><ArchitectureDiagram track={current.track} activeBlock={context.blockId} locale={locale} compact /><section className="editor-card"><div className="editor-titlebar"><div><FileCode2 /><span>rtl/{current.id}.v</span><em>Verilog-2005</em></div><div><button type="button" onClick={() => updateCode(current.starter)}><RotateCcw />{text.reset}</button>{solved.includes(current.id) && current.referenceSolution && <button type="button" onClick={() => setShowReference((value) => !value)}><BookOpen />{showReference ? text.hideRef : text.ref}</button>}</div></div><RtlEditor value={showReference ? current.referenceSolution ?? code : code} onChange={showReference ? () => undefined : updateCode} readOnly={showReference} /><div className="editor-toolbar"><p><ShieldAlert />{text.local}</p><div><button type="button" className="synth-button" disabled={!engineReady || synthesizing} onClick={synthesize}>{synthesizing ? <LoaderCircle className="spin" /> : <Gauge />}{text.synth}</button><button type="button" className="run-button" disabled={!engineReady || running || showReference} onClick={run}>{running ? <LoaderCircle className="spin" /> : <Play />}{running ? text.running : text.run}</button></div></div></section>{waveform && <WaveformViewer vcd={waveform} locale={locale} />}</>}
 

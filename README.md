@@ -24,6 +24,7 @@
 
 ### 線上互動功能
 
+- 每題先提供完整 micro-spec：功能邊界、全部 port 的方向／位寬／語意、clock/reset、ordered behavior、同拍 priority、逐拍範例與假設。
 - 繁體中文／英文題目、規格、提示與職務對應。
 - 瀏覽器內 Icarus Verilog 編譯與 self-checking simulation。
 - 每題都產生 VCD，可下載後用 GTKWave 等工具做 cycle-by-cycle 除錯。
@@ -48,7 +49,7 @@ pnpm dev
 
 1. 在 repository 的 **Settings → Pages → Build and deployment** 選擇 **GitHub Actions**。
 2. push 到 `main`。
-3. `.github/workflows/deploy-pages.yml` 會依序執行 install、230 項課程 regression、GitHub Pages build、release audit，成功後部署 `gh-pages/`。
+3. `.github/workflows/deploy-pages.yml` 會依序執行 install、410 項課程 regression、GitHub Pages build、release audit，成功後部署 `gh-pages/`。
 
 若 repository 改名，請同步修改 `vite.github.config.ts` 的 `base`。
 

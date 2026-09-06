@@ -223,6 +223,28 @@ button { color: inherit; }
 .view-tabs button:hover { color: #dbe9ee; }.view-tabs button[aria-selected='true'] { border-bottom-color: #36d7d0; color: #73ece6; background: linear-gradient(180deg, transparent, rgba(54, 215, 208, .07)); }
 .view-tabs svg { width: 17px; }
 
+.spec-sheet { display: grid; gap: 14px; }
+.spec-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 28px; padding: 24px; border: 1px solid #2f5c65; background: linear-gradient(135deg, #102d35, #0b1b25 62%); box-shadow: inset 4px 0 #45dcd5; }
+.spec-hero > div > span { display: inline-flex; align-items: center; gap: 8px; color: #69e6df; font: 12px var(--font-geist-mono); letter-spacing: .06em; text-transform: uppercase; }
+.spec-hero svg { width: 17px; }.spec-hero h3 { margin: 13px 0 7px; font-size: 21px; }.spec-hero p { max-width: 850px; margin: 0; color: #b8c9d0; font-size: 16px; line-height: 1.75; }
+.spec-hero button, .spec-start button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex: 0 0 auto; min-height: 42px; padding: 0 15px; border: 1px solid #54ddd6; background: #45dcd5; color: #041417; font-weight: 750; cursor: pointer; }
+.spec-hero button:hover, .spec-start button:hover { background: #77eee8; }.spec-hero button svg, .spec-start button svg { width: 17px; }
+.spec-section { border: 1px solid #29434f; background: rgba(11, 25, 34, .97); padding: 20px; }
+.spec-section > h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; color: #e3edf1; font-size: 16px; }.spec-section > h3 svg { width: 18px; color: #55dfd8; }
+.clock-contract { display: grid; grid-template-columns: 210px 1fr; align-items: center; gap: 20px; border-left: 3px solid #d9a754; }.clock-contract h3 { margin: 0; }.clock-contract h3 svg { color: #d9a754; }.clock-contract p { margin: 0; color: #b2c3ca; font-size: 15px; line-height: 1.7; }
+.spec-table-wrap { overflow-x: auto; border: 1px solid #243b47; scrollbar-color: #365463 transparent; }
+.port-table, .timing-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+.port-table th, .timing-table th { padding: 10px 12px; background: #091720; color: #7f98a5; font: 11px var(--font-geist-mono); letter-spacing: .06em; text-align: left; text-transform: uppercase; }
+.port-table td, .timing-table td { padding: 12px; border-top: 1px solid #223b46; color: #b4c5cc; font-size: 14px; line-height: 1.55; vertical-align: top; }
+.port-table tr:hover td, .timing-table tr:hover td { background: #10242e; }.port-table code, .timing-table code { color: #74ebe4; font: 13px var(--font-geist-mono); }
+.port-table th:nth-child(1) { width: 18%; }.port-table th:nth-child(2) { width: 10%; }.port-table th:nth-child(3) { width: 11%; }.timing-table th:first-child { width: 13%; }.timing-table th:nth-child(2) { width: 39%; }
+.direction { display: inline-block; min-width: 52px; padding: 3px 6px; border: 1px solid #365564; color: #9cb3be; font: 10px var(--font-geist-mono); text-align: center; text-transform: uppercase; }.direction.output { border-color: #356a58; color: #69dcae; }
+.spec-two-column { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr); gap: 14px; }
+.algorithm-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }.algorithm-list li { display: grid; grid-template-columns: 30px 1fr; gap: 11px; align-items: flex-start; }.algorithm-list li > span { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid #3c6870; background: #102b33; color: #63e2db; font: 12px var(--font-geist-mono); }.algorithm-list p { margin: 2px 0 0; color: #b5c6cd; font-size: 15px; line-height: 1.65; }
+.priority-section { border-color: #6a5534; background: #1d1a15; }.priority-section h3 svg { color: #e1ad57; }.priority-section ol { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }.priority-section li { display: grid; grid-template-columns: 28px 1fr; gap: 9px; color: #c4bba9; font-size: 14px; line-height: 1.6; }.priority-section li b { color: #e2ae58; font: 13px var(--font-geist-mono); }.priority-section p { margin: 0; color: #b7ad99; font-size: 14px; line-height: 1.65; }
+.assumptions { border-style: dashed; }.assumptions ul { margin: 0; padding-left: 20px; }.assumptions li { margin: 7px 0; color: #9db1bb; font-size: 14px; line-height: 1.6; }
+.spec-start { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 20px; border: 1px solid #35645e; background: #0c2524; }.spec-start p { margin: 0; color: #b7cecc; font-size: 14px; line-height: 1.65; }
+
 .architecture-figure { margin-bottom: 12px; border: 1px solid #263e4a; background: linear-gradient(180deg, rgba(14, 29, 39, .96), rgba(8, 18, 26, .96)); }
 .architecture-heading { display: flex; justify-content: space-between; gap: 24px; padding: 18px 20px 10px; }
 .architecture-heading h3 { margin: 0; font-size: 17px; }.architecture-heading p { margin: 5px 0 0; color: #8fa5b1; font-size: 13px; line-height: 1.5; }
@@ -261,6 +283,7 @@ button { color: inherit; }
   .academy-layout { grid-template-columns: 230px minmax(0, 1fr); }
   .mentor-panel { position: static; grid-column: 2; height: auto; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid #223541; }
   .scope-note { grid-column: 1 / -1; }
+  .spec-two-column { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
   .academy-header { position: static; align-items: flex-start; padding: 12px 14px; }.brand-lockup p, .engine-status, .header-link { display: none; }
@@ -269,4 +292,5 @@ button { color: inherit; }
   .editor-titlebar, .editor-toolbar { align-items: flex-start; flex-direction: column; }.editor-toolbar > div { width: 100%; }.editor-toolbar button { flex: 1; }.editor-toolbar p { line-height: 1.4; }
   .concept-grid { grid-template-columns: 1fr; }.concept-grid .boundary-card { grid-column: auto; }.architecture-heading { flex-direction: column; }.architecture-legend { justify-content: flex-start; }
   .mentor-panel { display: block; padding: 13px; }.rtl-editor { font-size: 13px; }
+  .spec-hero, .spec-start { flex-direction: column; }.spec-hero button, .spec-start button { width: 100%; }.clock-contract { grid-template-columns: 1fr; gap: 8px; }.spec-section { padding: 15px; }
 }

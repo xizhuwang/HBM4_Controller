@@ -21,6 +21,7 @@ async function loadTs(path) {
 
 const { challenges, tracks } = await loadTs('../lib/challenges.ts');
 const { architectures, labContext } = await loadTs('../lib/architectures.ts');
+const { labSpecs, parseModulePorts } = await loadTs('../lib/lab-specs.ts');
 let checks = 0;
 
 function verify(ok, name) {
@@ -79,6 +80,14 @@ for (const challenge of challenges) {
   const context = labContext[challenge.id];
   verify(Boolean(context?.placement.zh && context?.why.length >= 2 && context?.review.length >= 2 && context?.boundary.zh), `${challenge.id} architecture and design-review context`);
   verify(architectures[challenge.track].nodes.some((node) => node.id === context.blockId), `${challenge.id} diagram placement resolves`);
+  const detailed = labSpecs[challenge.id];
+  verify(Boolean(detailed?.purpose.zh && detailed?.purpose.en && detailed?.clocking.zh && detailed?.clocking.en && detailed?.algorithm.length >= 2 && detailed.algorithm.every((rule) => rule.zh && rule.en) && detailed?.example.length >= 1), `${challenge.id} bilingual implementation micro-spec`);
+  const parsedPorts = parseModulePorts(challenge.starter);
+  verify(parsedPorts.length >= 2, `${challenge.id} module interface parses`);
+  verify(parsedPorts.every((port) => detailed.ports[port.name]?.zh && detailed.ports[port.name]?.en), `${challenge.id} every port is documented`);
+  verify(Object.keys(detailed.ports).every((name) => parsedPorts.some((port) => port.name === name)), `${challenge.id} spec has no ghost ports`);
+  verify(detailed.example.every((step) => step.cycle && step.drive.zh && step.drive.en && step.expect.zh && step.expect.en), `${challenge.id} cycle examples are complete`);
+  verify(!parsedPorts.some((port) => port.name === 'clk') || detailed.priority.length >= 1, `${challenge.id} sequential priority is explicit`);
   assert.equal(challenge.judge, 'simulation', `${challenge.id} must remain executable`);
   assert.ok(challenge.referenceSolution, `Missing reference: ${challenge.id}`);
   assert.ok(challenge.testbench, `Missing testbench: ${challenge.id}`);
