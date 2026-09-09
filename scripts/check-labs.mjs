@@ -30,6 +30,7 @@ async function loadTs(path) {
 const { challenges, tracks } = await loadTs('../lib/challenges.ts');
 const { architectures, labContext } = await loadTs('../lib/architectures.ts');
 const { labSpecs, labReferences, parseModulePorts } = await loadTs('../lib/lab-specs.ts');
+const { hbmLearningGuides, hbmTerms } = await loadTs('../lib/hbm-learning-guides.ts');
 let checks = 0;
 
 function verify(ok, name) {
@@ -99,6 +100,12 @@ for (const challenge of challenges) {
   if (challenge.track === 'hbm') {
     const reference = labReferences[challenge.id];
     verify(Boolean(reference?.source?.zh?.includes('JESD270-4A') && reference?.source?.en?.includes('JESD270-4A') && reference?.topics?.zh && reference?.topics?.en && reference?.profile?.zh && reference?.profile?.en), `${challenge.id} has a bilingual HBM4 spec trace`);
+    const guide = hbmLearningGuides[challenge.id];
+    verify(Boolean(guide?.plainGoal?.zh && guide?.plainGoal?.en && guide?.analogy?.zh && guide?.analogy?.en && guide?.input?.zh && guide?.output?.zh), `${challenge.id} starts with a plain-language goal`);
+    verify(Boolean(guide?.terms?.length >= 3 && guide.terms.every((id) => hbmTerms[id]?.name?.zh && hbmTerms[id]?.meaning?.zh && hbmTerms[id]?.meaning?.en)), `${challenge.id} explains every prerequisite term`);
+    verify(Boolean(guide?.circuit?.length >= 3 && guide.circuit.every((stage) => stage.label?.zh && stage.detail?.zh && stage.detail?.en)), `${challenge.id} has a circuit flow diagram`);
+    verify(Boolean(guide?.waveform?.cycles?.length >= 3 && guide.waveform.signals?.length >= 2 && guide.waveform.signals.every((signal) => signal.values.length === guide.waveform.cycles.length)), `${challenge.id} has a complete expected waveform`);
+    verify(Boolean(guide?.steps?.length >= 3 && guide.steps.every((step) => step.zh && step.en)), `${challenge.id} has incremental coding steps`);
   }
   assert.equal(challenge.judge, 'simulation', `${challenge.id} must remain executable`);
   assert.ok(challenge.referenceSolution, `Missing reference: ${challenge.id}`);

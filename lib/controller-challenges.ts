@@ -116,14 +116,31 @@ task step;input[3:0]d;input e;begin @(negedge clk);depth=d;@(posedge clk);#1;che
 initial begin repeat(2)@(posedge clk);rst_n=1;step(5,0);step(6,1);step(5,1);step(3,1);step(2,0);$display("@@PASS@@");$finish;end endmodule`,
   },
   {
-    id: 'hbm-pseudo-channel-map', order: 9, track: 'hbm', difficulty: 'intermediate', minutes: 40, points: 240,
+    id: 'hbm-pseudo-channel-map', order: 9, track: 'hbm', difficulty: 'beginner', minutes: 30, points: 200,
     kind: 'build', judge: 'simulation', language: 'Verilog-2005',
-    title: { zh: 'HBM Pseudo-Channel Mapping', en: 'HBM pseudo-channel mapping' },
-    description: { zh: '在縮小的8-channel HBM模型中切割channel、pseudo-channel、bank-group、bank、row與column。', en: 'Decode channel, pseudo-channel, bank group, bank, row, and column in a reduced eight-channel HBM model.' },
+    title: { zh: '第一步：把位址拆成 HBM 位置', en: 'First step: split an address into an HBM location' },
+    description: { zh: '先從最簡單的純接線開始：把 20-bit addr 拆成 row、channel、pseudo-channel、bank-group、bank 與 column。沒有 clock，也不需要先懂 HBM 時序。', en: 'Start with simple wiring: split a 20-bit addr into row, channel, pseudo-channel, bank group, bank, and column. There is no clock, and no HBM timing knowledge is required yet.' },
     specs: [{ zh: 'column[3:0]、bank[5:4]、BG[7:6]、PC[8]、channel[11:9]、row[19:12]。', en: 'column[3:0], bank[5:4], BG[7:6], PC[8], channel[11:9], row[19:12].' }, { zh: '這是教學profile，不是公開重製JEDEC完整mapping。', en: 'This is an educational profile, not a reproduction of a complete JEDEC mapping.' }],
     testGroups: [{ zh: 'PC邊界', en: 'PC boundary' }, { zh: 'channel/BG/bank', en: 'Channel/BG/bank' }, { zh: 'row/column', en: 'Row/column' }],
-    hints: [{ zh: '把每個欄位直接對應到規格指定的bit slice。', en: 'Map each field directly to the specified bit slice.' }],
-    starter: `module hbm_map(input wire[19:0]addr,output wire[2:0]channel,output wire pc,output wire[1:0]bg,output wire[1:0]bank,output wire[7:0]row,output wire[3:0]column);/* TODO */endmodule`,
+    hints: [{ zh: '這題不需要 always block。每個 output 都是一條 assign，右邊接 addr 的對應範圍。', en: 'No always block is needed. Each output is one assign connected to the matching addr slice.' }, { zh: '先完成 column=addr[3:0]，再依序往高位接 bank、bg、pc、channel、row。', en: 'Start with column=addr[3:0], then move upward through bank, bg, pc, channel, and row.' }],
+    starter: `module hbm_map(
+  input  wire [19:0] addr,
+  output wire [2:0]  channel,
+  output wire        pc,
+  output wire [1:0]  bg,
+  output wire [1:0]  bank,
+  output wire [7:0]  row,
+  output wire [3:0]  column
+);
+  // 範例：最低 4 bits 直接接到 column。
+  assign column = addr[3:0];
+
+  // TODO 1：bank 接 addr[5:4]
+  // TODO 2：bg 接 addr[7:6]
+  // TODO 3：pc 接 addr[8]
+  // TODO 4：channel 接 addr[11:9]
+  // TODO 5：row 接 addr[19:12]
+endmodule`,
     referenceSolution: `module hbm_map(input wire[19:0]addr,output wire[2:0]channel,output wire pc,output wire[1:0]bg,output wire[1:0]bank,output wire[7:0]row,output wire[3:0]column);assign column=addr[3:0];assign bank=addr[5:4];assign bg=addr[7:6];assign pc=addr[8];assign channel=addr[11:9];assign row=addr[19:12];endmodule`,
     testbench: `module tb;reg[19:0]a;wire[2:0]ch;wire pc;wire[1:0]bg,bk;wire[7:0]row;wire[3:0]col;integer i;hbm_map dut(a,ch,pc,bg,bk,row,col);${pass}task t;input[19:0]v;begin a=v;#1;check({row,ch,pc,bg,bk,col}===v);end endtask initial begin t(0);t(20'hfffff);t(20'ha55aa);for(i=0;i<64;i=i+1)t(i*20'h321);$display("@@PASS@@");$finish;end endmodule`,
   },

@@ -8,7 +8,7 @@ The course treats every exercise as an executable contract. A release is accepte
 pnpm test
 ```
 
-The current suite performs 583 checks across 42 bilingual advanced challenges:
+The current suite performs 668 checks across 42 bilingual advanced challenges:
 
 - challenge IDs and order are unique, contiguous, and the expected count is exactly 42;
 - none of the foundation challenge IDs from `rtl-interview-lab` are reused;
@@ -16,6 +16,7 @@ The current suite performs 583 checks across 42 bilingual advanced challenges:
 - every lab resolves to a highlighted block, explains why it exists, states the PHY/analog boundary, and includes senior design-review questions;
 - every lab has a complete implementation micro-spec, at least one cycle example, and ordered behavior rules;
 - every HBM lab has a bilingual JESD270-4A topic trace and clearly labels its reduced educational timing/profile values;
+- every HBM lab starts with a bilingual plain-language goal and analogy, resolves every glossary term, and provides a complete circuit flow, expected waveform, and incremental coding recipe;
 - every Verilog port parsed from the starter module has a bilingual definition, with no nonexistent “ghost” ports in the spec;
 - every challenge has Chinese and English content, specifications, test groups, hints, starter code, and an explicit judge type;
 - all simulation reference solutions compile and pass their self-checking testbench;

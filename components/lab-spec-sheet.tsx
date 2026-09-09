@@ -1,5 +1,6 @@
 import { ArrowRight, BookMarked, Braces, Clock3, ListOrdered, ShieldCheck, TableProperties } from 'lucide-react';
 
+import { HbmLessonGuide } from '@/components/hbm-lesson-guide';
 import { localize, type Challenge, type Locale } from '@/lib/challenges';
 import { labReferences, labSpecs, parseModulePorts } from '@/lib/lab-specs';
 
@@ -16,6 +17,7 @@ export function LabSpecSheet({ challenge, locale, onStart }: { challenge: Challe
 
   return (
     <section className="spec-sheet">
+      {challenge.track === 'hbm' && <HbmLessonGuide challenge={challenge} locale={locale} />}
       <header className="spec-hero">
         <div><span><Braces />{text.title}</span><h3>{text.purpose}</h3><p>{localize(item.purpose, locale)}</p></div>
         <button type="button" onClick={onStart}>{text.start}<ArrowRight /></button>

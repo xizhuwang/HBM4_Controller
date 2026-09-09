@@ -45,6 +45,8 @@ The seventeen HBM labs are organized as six review gates:
 
 Each lab includes a topic-level trace to JESD270-4A. Numeric windows are intentionally reduced for executable learning; an implementation must load the applicable speed-bin, mode-register, PHY, package, and system values rather than treating the teaching constants as product parameters.
 
+Before the formal micro-spec, every HBM lesson follows the same human-readable sequence: plain-language objective and analogy, prerequisite glossary, location in the full controller, internal circuit flow, expected waveform, and three incremental coding steps. Lab 9 begins with an interactive address decoder and requires no prior timing knowledge.
+
 Exit evidence:
 
 - explain why a flat 1024-bank arbiter is a timing and routing problem;

@@ -26,6 +26,7 @@
 
 - 每題先提供完整 micro-spec：功能邊界、全部 port 的方向／位寬／語意、clock/reset、ordered behavior、同拍 priority、逐拍範例與假設。
 - 每個 HBM 題目另外顯示 JESD270-4A 條款追溯、在完整 controller 的電路位置，以及教學縮小值與產品參數的邊界；文字為重述，不重製標準表格。
+- 17 個 HBM 題目都先用白話目標、生活比喻與名詞卡建立心智模型，再提供 controller 架構圖、題內電路方塊圖、預期邏輯波形與三步 coding recipe；第一題另有可操作的 20-bit 位址解碼器。
 - 繁體中文／英文題目、規格、提示與職務對應。
 - 瀏覽器內 Icarus Verilog 編譯與 self-checking simulation。
 - 每題都產生 VCD，可下載後用 GTKWave 等工具做 cycle-by-cycle 除錯。

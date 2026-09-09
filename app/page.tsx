@@ -28,7 +28,7 @@ const storage = {
 const copy = {
   zh: {
     product: 'Controller RTL Academy', subtitle: 'HBM4 Spec → Architecture → RTL → Verification', search: '搜尋進階題目', curriculum: 'Controller 路徑', all: '全部', progress: '完成進度',
-    spec: 'SPEC 與時序', lab: 'RTL 工作台', architecture: '架構與原理', review: 'Design Review', run: '執行 Regression', running: '模擬中…', synth: 'Generic Synthesis', reset: '重設 Starter',
+    spec: '圖解教學與 SPEC', lab: 'RTL 工作台', architecture: '架構總覽', review: 'Design Review', run: '執行 Regression', running: '模擬中…', synth: 'Generic Synthesis', reset: '重設 Starter',
     why: '為什麼一定要做', placement: '它在 Controller 哪裡', boundary: '數位／類比邊界', requirements: '可執行規格', tests: '驗收條件', hints: '分層提示',
     result: 'Regression Console', waiting: '修改 RTL 後執行 regression；編譯、錯誤與波形會留在這裡。', passed: '功能 Regression 通過', failed: '尚未通過',
     evidence: '你必須能提出的證據', questions: '資深工程師應能回答', next: '下一題', source: 'GitHub', local: '程式與進度只存在此瀏覽器；禁止貼公司或 NDA RTL。',
@@ -36,7 +36,7 @@ const copy = {
   },
   en: {
     product: 'Controller RTL Academy', subtitle: 'HBM4 Spec → Architecture → RTL → Verification', search: 'Search advanced labs', curriculum: 'Controller paths', all: 'All', progress: 'Progress',
-    spec: 'Spec & Timing', lab: 'RTL Workbench', architecture: 'Architecture & Why', review: 'Design Review', run: 'Run Regression', running: 'Simulating…', synth: 'Generic Synthesis', reset: 'Reset Starter',
+    spec: 'Visual lesson & spec', lab: 'RTL Workbench', architecture: 'Architecture overview', review: 'Design Review', run: 'Run Regression', running: 'Simulating…', synth: 'Generic Synthesis', reset: 'Reset Starter',
     why: 'Why this block exists', placement: 'Where it sits', boundary: 'Digital / analog boundary', requirements: 'Executable requirements', tests: 'Acceptance tests', hints: 'Layered hints',
     result: 'Regression Console', waiting: 'Edit the RTL and run regression. Compile errors, failures, and waveforms stay here.', passed: 'Functional regression passed', failed: 'Not passed',
     evidence: 'Evidence you must produce', questions: 'Questions an experienced owner must answer', next: 'Next lab', source: 'GitHub', local: 'Code and progress remain in this browser. Never paste company or NDA RTL.',
@@ -52,7 +52,7 @@ function rank(points: number) {
 }
 
 const hbmStages = [
-  { id: 'organization', zh: '組織與命令', en: 'Organization & commands', labs: ['hbm-pseudo-channel-map', 'hbm-dual-command-gate', 'hbm-bank-state-table'] },
+  { id: 'organization', zh: '先看懂 HBM', en: 'Understand HBM first', labs: ['hbm-pseudo-channel-map', 'hbm-dual-command-gate', 'hbm-bank-state-table'] },
   { id: 'timing', zh: '核心時序', en: 'Core timing', labs: ['hbm-row-timing-scoreboard', 'hbm-bankgroup-tccd', 'hbm-activate-window', 'hbm-rw-turnaround'] },
   { id: 'scheduling', zh: '階層排程', en: 'Hierarchical scheduling', labs: ['hbm-hierarchical-arbiter'] },
   { id: 'maintenance', zh: 'Refresh / RFM / DRFM', en: 'Refresh / RFM / DRFM', labs: ['hbm-refresh-credit', 'hbm-refresh-domain', 'hbm-rfm-counter', 'hbm-drfm-sequencer'] },
