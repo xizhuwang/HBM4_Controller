@@ -1,6 +1,6 @@
 # Advanced controller RTL curriculum
 
-This is the second-stage course after `rtl-interview-lab`. It intentionally does not repeat generic counters, FIFOs, CDC synchronizers, AXI register slices, introductory verification, or other foundation exercises. The 30 labs turn those prerequisites into memory and PCIe controller mechanisms.
+This is the second-stage course after `rtl-interview-lab`. It intentionally does not repeat generic counters, FIFOs, CDC synchronizers, AXI register slices, introductory verification, or other foundation exercises. The 42 labs turn those prerequisites into memory and PCIe controller mechanisms.
 
 ## How to complete a lab
 
@@ -28,11 +28,22 @@ Exit evidence:
 - define refresh deadline, starvation, row-hit, and bus-direction priorities;
 - show how one-bank logic replicates and how global shared constraints are added.
 
-## Stage 2 — HBM hierarchy (labs 9–13)
+## Stage 2 — HBM4 hierarchy and command legality (labs 9–25)
 
 Build the path:
 
-`channel/PC decode → per-PC queues → per-bank/BG legality → local winner → hierarchical arbitration → independent refresh masks → channel issue`
+`address/PC decode → dual command-slot gate → bank state → row/column timing scoreboards → hierarchical arbitration → REF/RFM/DRFM maintenance → MRS/parity/power sequencing → 32-channel dispatch → dual-issue channel capstone`
+
+The seventeen HBM labs are organized as six review gates:
+
+1. **Organization (9–11):** pseudo-channel mapping, shared-command slot ownership, and explicit bank/open-row state.
+2. **Core timing (12–15):** ACT→column delay, bank-group spacing, rolling activation window, and read/write turnaround.
+3. **Scheduling (16):** local PC arbitration with a channel-level winner and commit-qualified state updates.
+4. **Maintenance (17–20):** refresh credit/deadline, per-PC refresh domains, RAA-based RFM, and DRFM capture/drain sequencing.
+5. **Configuration/RAS/power (21–23):** quiescent MRS, CA parity/AERR behavior, and safe power-state entry/exit.
+6. **Stack integration (24–25):** 32-channel/64-PC/1024-bank steering followed by an independent row/column dual-issue capstone.
+
+Each lab includes a topic-level trace to JESD270-4A. Numeric windows are intentionally reduced for executable learning; an implementation must load the applicable speed-bin, mode-register, PHY, package, and system values rather than treating the teaching constants as product parameters.
 
 Exit evidence:
 
@@ -42,7 +53,7 @@ Exit evidence:
 - propose pipeline cuts and explain how priority snapshots survive them;
 - distinguish HBM controller RTL from PHY, microbump, interposer, SI/PI, and thermal work.
 
-## Stage 3 — LPDDR control plane (labs 14–17)
+## Stage 3 — LPDDR control plane (labs 26–29)
 
 Build the path:
 
@@ -56,7 +67,7 @@ Exit evidence:
 - identify retention state and CDC/RDC crossings;
 - explain which training behavior is digital sequencing and which belongs in the PHY.
 
-## Stage 4 — GDDR high-speed data path (labs 18–21)
+## Stage 4 — GDDR high-speed data path (labs 30–33)
 
 Build the path:
 
@@ -70,7 +81,7 @@ Exit evidence:
 - explain parity/CRC coverage limits and error escalation;
 - separate logical reliability state from IO sampling, equalization, and channel margin.
 
-## Stage 5 — PCIe layered controller (labs 22–30)
+## Stage 5 — PCIe layered controller (labs 34–42)
 
 Build the path:
 

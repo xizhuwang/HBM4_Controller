@@ -1,4 +1,5 @@
 import type { Localized } from './challenges';
+import { hbm4AdvancedReferences, hbm4AdvancedSpecs, type LabReference } from './hbm4-advanced-specs';
 
 export type PortInfo = { name: string; direction: string; width: string };
 export type TimingExample = { cycle: string; drive: Localized; expect: Localized };
@@ -21,6 +22,7 @@ const combinational = b('純組合模組：輸入改變後，同一模擬時間�
 const resetPorts = { clk: b('模組時脈；只在上升緣提交狀態。', 'Module clock; state commits only on rising edges.'), rst_n: b('同步低有效 reset；在 clk 上升緣為 0 時清除所有狀態。', 'Synchronous active-low reset; clears all state when low at a rising edge.') };
 
 export const labSpecs: Record<string, LabSpec> = {
+  ...hbm4AdvancedSpecs,
   'dram-address-map': spec(
     b('建立 controller 的第一級位址解碼器，把 16-bit 線性 request address 唯一切成 column、bank、channel、row。輸出只描述目的地，不儲存資料也不發 DRAM command。', 'Build the controller’s first address decoder, uniquely slicing a 16-bit request address into column, bank, channel, and row. It selects a destination; it neither stores data nor issues a DRAM command.'),
     combinational,
@@ -118,12 +120,13 @@ export const labSpecs: Record<string, LabSpec> = {
     [b('同一 PC 的新 ref_start 重新載入 3，優先於 decrement。', 'A new ref_start for a PC reloads 3 and has priority over decrement.')],
   ),
   'hbm-channel-capstone': spec(
-    b('整合四個 pseudo-channel 的 request valid、timing legality 與 refresh busy，先形成 eligible mask，再以 round-robin 每拍 issue 最多一筆。', 'Combine request validity, timing legality, and refresh state for four pseudo-channels, form an eligible mask, then issue at most one request per cycle by round-robin.'),
+    b('建立一個可複製到 32-channel stack 的 channel issue slice。兩個 pseudo-channel 的 row/column 路徑各自通過 legality 與 round-robin，正常模式可同拍 dual-issue；maintenance request 則先 drain，再取得唯一 command slot。', 'Build one channel-issue slice that can replicate across a 32-channel stack. Row and column paths for two pseudo-channels pass independent legality and round-robin selection, allowing normal dual issue; maintenance first drains, then owns the command slot.'),
     syncClock,
-    { ...resetPorts, valid: b('每個 PC 有 pending request 的 bitmap。', 'Bitmap of PCs with pending requests.'), timing_ok: b('timing scoreboard 對每個 PC 的合法性 bitmap。', 'Per-PC legality bitmap from timing scoreboards.'), refresh_busy: b('每個 PC 正在 refresh 的 bitmap；1 必須阻擋。', 'Per-PC refresh-busy bitmap; one must block issue.'), grant: b('eligible requests 中的 one-hot round-robin winner。', 'One-hot round-robin winner among eligible requests.') },
-    [b('先計算 eligible = valid & timing_ok & ~refresh_busy。', 'First compute eligible = valid & timing_ok & ~refresh_busy.'), b('從 ptr 循環掃描 eligible，第一個 1 形成 one-hot grant。', 'Scan eligible cyclically from ptr; the first one forms the one-hot grant.'), b('grant edge 後 ptr=winner+1；沒有 grant 時保持。', 'After a granted edge, ptr=winner+1; hold when no grant occurs.')],
-    [e('C0', 'valid=1111、timing_ok=1111、refresh=0000、ptr=0', 'valid=1111, timing_ok=1111, refresh=0000, ptr=0', 'eligible=1111、grant=0001', 'eligible=1111, grant=0001'), e('C1', 'ptr=1、refresh=0010', 'ptr=1, refresh=0010', '跳過 PC1，grant=0100', 'skip PC1, grant=0100'), e('C2', 'timing_ok=1000', 'timing_ok=1000', '只有 PC3 eligible，grant=1000', 'only PC3 is eligible, grant=1000')],
-    [b('合法性 mask 先於效能仲裁；不得 grant timing/refresh 非法者。', 'Legality masks precede performance arbitration; never grant a timing- or refresh-illegal request.')],
+    { ...resetPorts, row_valid: b('PC[1:0] 的 row-command candidates。', 'Row-command candidates for PC[1:0].'), row_timing_ok: b('每個 row candidate 已通過 bank state、tRRD/tFAW、refresh 等 legality。', 'Each row candidate passed bank state, tRRD/tFAW, refresh, and other legality checks.'), col_valid: b('PC[1:0] 的 column-command candidates。', 'Column-command candidates for PC[1:0].'), col_timing_ok: b('每個 column candidate 已通過 row hit、tRCD/tCCD/turnaround 等 legality。', 'Each column candidate passed row-hit, tRCD/tCCD/turnaround, and other legality checks.'), maintenance_valid: b('REF/RFM/DRFM/MRS/power 等 maintenance transaction 要求 drain 並取得 command ownership。', 'A REF/RFM/DRFM/MRS/power maintenance transaction requests drain and command ownership.'), channel_quiescent: b('兩個 PC 的 queue/outstanding/command pipeline 都已排空。', 'Both PCs have drained queues, outstanding work, and command pipelines.'), phy_ready: b('PHY adapter 本拍可接受完整 command bundle。', 'The PHY adapter can accept the complete command bundle this cycle.'), row_grant: b('row path 的 one-hot PC winner；0 表示沒有 row issue。', 'One-hot PC winner for the row path; zero means no row issue.'), col_grant: b('column path 的 one-hot PC winner；可與 row_grant 同拍。', 'One-hot PC winner for the column path; may coincide with row_grant.'), maint_grant: b('maintenance_valid&&channel_quiescent&&phy_ready；取得唯一 maintenance commit。', 'maintenance_valid&&channel_quiescent&&phy_ready; the unique maintenance commit.') },
+    [b('row_eligible=row_valid&row_timing_ok；col_eligible=col_valid&col_timing_ok。兩條路徑各有自己的 1-bit round-robin pointer。', 'row_eligible=row_valid&row_timing_ok and col_eligible=col_valid&col_timing_ok. Each path has an independent one-bit round-robin pointer.'), b('maintenance_valid=0 且 phy_ready=1 時，row/column 各選最多一個 PC；兩者可同拍 fire。', 'When maintenance_valid=0 and phy_ready=1, row and column independently select at most one PC and may fire together.'), b('maintenance_valid=1 時，所有 normal grants=0；只有 channel_quiescent&&phy_ready 才 maint_grant=1。', 'When maintenance_valid=1, all normal grants are zero; maint_grant requires channel_quiescent&&phy_ready.'), b('pointer 只在對應 grant 真正成立的 edge 前進；PHY stall 或 maintenance drain 時保持。', 'Each pointer advances only on its actual grant edge and holds during PHY stalls or maintenance drain.')],
+    [e('C0', '兩條 valid/timing 都=11、pointer 都=0、phy_ready=1', 'both valid/timing vectors=11, both pointers=0, phy_ready=1', 'row_grant=01、col_grant=01；edge 後兩 pointer=1', 'row_grant=01 and col_grant=01; both pointers become one'), e('C1', '條件不變', 'conditions unchanged', 'row_grant=10、col_grant=10', 'row_grant=10 and col_grant=10'), e('M0', 'maintenance_valid=1、channel_quiescent=0', 'maintenance_valid=1, channel_quiescent=0', '所有 grant=0，等待 drain', 'all grants=0 while draining'), e('M1', 'channel_quiescent=1、phy_ready=1', 'channel_quiescent=1, phy_ready=1', 'maint_grant=1；normal grants 仍為 0', 'maint_grant=1; normal grants remain zero')],
+    [b('Reset > maintenance exclusion > PHY readiness > row/column legality > independent policy。', 'Reset > maintenance exclusion > PHY readiness > row/column legality > independent policy.')],
+    [b('此 capstone 接收已解碼的 abstract candidates；實際 command encoding、DQ data path、training 與 electrical timing 位於 adapter/PHY。', 'This capstone accepts decoded abstract candidates; actual command encoding, DQ datapath, training, and electrical timing live in the adapter/PHY.')],
   ),
   'lpddr-power-sequence': spec(
     b('控制 LPDDR power-down 的安全數位順序：先停止/排空流量，再 gate clock、assert isolation、關 power；喚醒時反向恢復。', 'Control a safe LPDDR power-down sequence: stop/drain traffic, gate clock, assert isolation, power off, then reverse safely on wake.'),
@@ -275,3 +278,18 @@ export function parseModulePorts(source: string): PortInfo[] {
   }
   return ports;
 }
+
+const hbmReference = (clause: string, topicsZh: string, topicsEn: string): LabReference => ({
+  source: b(`JEDEC JESD270-4A，${clause}`, `JEDEC JESD270-4A, ${clause}`),
+  topics: b(topicsZh, topicsEn),
+  profile: b('題目採縮小且獨立撰寫的 executable profile；產品數值與完整命令編碼必須回查合法取得的規格與 vendor speed-bin。', 'The lab uses a reduced, independently authored executable profile; product values and complete encodings must come from the licensed standard and vendor speed bin.'),
+});
+
+export const labReferences: Record<string, LabReference> = {
+  ...hbm4AdvancedReferences,
+  'hbm-pseudo-channel-map': hbmReference('§3.1–3.2', 'Channel、pseudo-channel、addressing 與 bank-group organization', 'Channel, pseudo-channel, addressing, and bank-group organization'),
+  'hbm-bankgroup-tccd': hbmReference('§3.2.1、§6.3.3、§10', 'Bank-group 對 tCCD_S/L/R 的影響', 'Bank-group effects on tCCD_S/L/R'),
+  'hbm-hierarchical-arbiter': hbmReference('§3.1–3.2', '從 channel/PC/bank 組織推導的 controller hierarchy', 'Controller hierarchy derived from channel/PC/bank organization'),
+  'hbm-refresh-domain': hbmReference('§3.1.2、§6.3.2.5', 'Per-pseudo-channel refresh timing 與 shared command constraints', 'Per-pseudo-channel refresh timing and shared-command constraints'),
+  'hbm-channel-capstone': hbmReference('§3、§6.3、§10', 'HBM channel-level command legality、timing 與 scheduling integration', 'HBM channel-level command legality, timing, and scheduling integration'),
+};

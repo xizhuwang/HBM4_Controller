@@ -3,25 +3,33 @@ import { readFile } from 'node:fs/promises';
 import { Worker } from 'node:worker_threads';
 import ts from 'typescript';
 
-async function loadTs(path) {
-  const source = await readFile(new URL(path, import.meta.url), 'utf8');
+const moduleUrls = new Map();
+
+async function compileTsUrl(url) {
+  const key = url.href;
+  if (moduleUrls.has(key)) return moduleUrls.get(key);
+  const source = await readFile(url, 'utf8');
   let { outputText } = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
   });
-  if (path.endsWith('challenges.ts')) {
-    const extensionSource = await readFile(new URL('../lib/controller-challenges.ts', import.meta.url), 'utf8');
-    const extensionJs = ts.transpileModule(extensionSource, {
-      compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
-    }).outputText;
-    const extensionUrl = 'data:text/javascript;base64,' + Buffer.from(extensionJs).toString('base64');
-    outputText = outputText.replace("'./controller-challenges'", JSON.stringify(extensionUrl));
+  const imports = [...outputText.matchAll(/from\s+['"](\.\.?\/[^'"]+)['"]/g)].map((match) => match[1]);
+  for (const specifier of new Set(imports)) {
+    const dependency = new URL(specifier.endsWith('.ts') ? specifier : specifier + '.ts', url);
+    const dependencyUrl = await compileTsUrl(dependency);
+    outputText = outputText.replaceAll(`'${specifier}'`, JSON.stringify(dependencyUrl)).replaceAll(`"${specifier}"`, JSON.stringify(dependencyUrl));
   }
-  return import('data:text/javascript;base64,' + Buffer.from(outputText).toString('base64'));
+  const compiled = 'data:text/javascript;base64,' + Buffer.from(outputText).toString('base64');
+  moduleUrls.set(key, compiled);
+  return compiled;
+}
+
+async function loadTs(path) {
+  return import(await compileTsUrl(new URL(path, import.meta.url)));
 }
 
 const { challenges, tracks } = await loadTs('../lib/challenges.ts');
 const { architectures, labContext } = await loadTs('../lib/architectures.ts');
-const { labSpecs, parseModulePorts } = await loadTs('../lib/lab-specs.ts');
+const { labSpecs, labReferences, parseModulePorts } = await loadTs('../lib/lab-specs.ts');
 let checks = 0;
 
 function verify(ok, name) {
@@ -62,11 +70,11 @@ const legacyFoundationIds = new Set([
   'timing-setup-hold', 'ppa-width-discipline', 'xor-cnf',
 ]);
 
-verify(challenges.length === 30, '30 advanced controller labs');
+verify(challenges.length === 42, '42 advanced controller labs');
 verify(new Set(challenges.map((challenge) => challenge.id)).size === challenges.length, 'unique challenge ids');
 verify(challenges.every((challenge) => !legacyFoundationIds.has(challenge.id)), 'no rtl-interview-lab foundation duplicates');
 verify(new Set(challenges.map((challenge) => challenge.order)).size === challenges.length, 'unique curriculum order');
-verify(Math.min(...challenges.map((challenge) => challenge.order)) === 1 && Math.max(...challenges.map((challenge) => challenge.order)) === 30, 'contiguous curriculum order');
+verify(Math.min(...challenges.map((challenge) => challenge.order)) === 1 && Math.max(...challenges.map((challenge) => challenge.order)) === challenges.length, 'contiguous curriculum order');
 
 for (const track of tracks) {
   const labs = challenges.filter((challenge) => challenge.track === track.id);
@@ -88,6 +96,10 @@ for (const challenge of challenges) {
   verify(Object.keys(detailed.ports).every((name) => parsedPorts.some((port) => port.name === name)), `${challenge.id} spec has no ghost ports`);
   verify(detailed.example.every((step) => step.cycle && step.drive.zh && step.drive.en && step.expect.zh && step.expect.en), `${challenge.id} cycle examples are complete`);
   verify(!parsedPorts.some((port) => port.name === 'clk') || detailed.priority.length >= 1, `${challenge.id} sequential priority is explicit`);
+  if (challenge.track === 'hbm') {
+    const reference = labReferences[challenge.id];
+    verify(Boolean(reference?.source?.zh?.includes('JESD270-4A') && reference?.source?.en?.includes('JESD270-4A') && reference?.topics?.zh && reference?.topics?.en && reference?.profile?.zh && reference?.profile?.en), `${challenge.id} has a bilingual HBM4 spec trace`);
+  }
   assert.equal(challenge.judge, 'simulation', `${challenge.id} must remain executable`);
   assert.ok(challenge.referenceSolution, `Missing reference: ${challenge.id}`);
   assert.ok(challenge.testbench, `Missing testbench: ${challenge.id}`);

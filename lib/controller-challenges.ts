@@ -1,4 +1,5 @@
 import type { Challenge } from './challenges';
+import { hbm4AdvancedChallenges } from './hbm4-advanced-challenges';
 
 const pass = `
 task check;
@@ -12,7 +13,7 @@ task check;
 endtask
 `;
 
-export const controllerChallenges: Challenge[] = [
+const baseControllerChallenges: Challenge[] = [
   {
     id: 'dram-address-map', order: 1, track: 'dram', difficulty: 'intermediate', minutes: 30, points: 180,
     kind: 'build', judge: 'simulation', language: 'Verilog-2005',
@@ -266,16 +267,16 @@ initial begin repeat(2)@(posedge clk);rst_n=1;at=2;a=1;@(posedge clk);#1;a=0;che
     testbench: `module tb;reg clk=0,rst_n=0;reg[3:0]s=0;wire[3:0]a;hbm_refresh_domains dut(clk,rst_n,s,a);always #5 clk=~clk;${pass}initial begin repeat(2)@(posedge clk);rst_n=1;#1;check(a==15);@(negedge clk);s=2;#1;check(a==13);@(posedge clk);#1;s=0;check(a==13);@(negedge clk);s=8;@(posedge clk);#1;s=0;check(a[0]&&a[2]&&!a[1]&&!a[3]);repeat(2)@(posedge clk);#1;check(a[1]&&!a[3]);@(posedge clk);#1;check(a==15);$display("@@PASS@@");$finish;end endmodule`,
   },
   {
-    id: 'hbm-channel-capstone', order: 13, track: 'hbm', difficulty: 'capstone', minutes: 90, points: 560,
+    id: 'hbm-channel-capstone', order: 13, track: 'hbm', difficulty: 'capstone', minutes: 105, points: 680,
     kind: 'build', judge: 'simulation', language: 'Verilog-2005',
-    title: { zh: 'HBM Channel Issue Capstone', en: 'HBM channel issue capstone' },
-    description: { zh: '整合valid、bank timing、refresh與pseudo-channel仲裁，形成一個可擴展channel issue stage。', en: 'Integrate valid requests, bank timing, refresh status, and pseudo-channel arbitration into a scalable channel issue stage.' },
-    specs: [{ zh: 'eligible = valid & timing_ok & ~refresh_busy；grant必須one-hot。', en: 'eligible = valid & timing_ok & ~refresh_busy; grant must be one-hot.' }, { zh: 'grant成功後round-robin指標前進。', en: 'Advance round-robin state after a grant.' }],
-    testGroups: [{ zh: 'timing過濾', en: 'Timing filtering' }, { zh: 'refresh隔離', en: 'Refresh isolation' }, { zh: '公平性', en: 'Fairness' }],
-    hints: [{ zh: '先把政策與合法性分層：先算eligible，再交給arbiter。', en: 'Separate policy from legality: compute eligible first, then arbitrate.' }],
-    starter: `module hbm_channel_issue(input wire clk,input wire rst_n,input wire[3:0]valid,input wire[3:0]timing_ok,input wire[3:0]refresh_busy,output reg[3:0]grant);always @*grant=valid;endmodule`,
-    referenceSolution: `module hbm_channel_issue(input wire clk,input wire rst_n,input wire[3:0]valid,input wire[3:0]timing_ok,input wire[3:0]refresh_busy,output reg[3:0]grant);wire[3:0]e=valid&timing_ok&~refresh_busy;reg[1:0]ptr;integer k;reg found;reg[2:0]idx;always @*begin grant=0;found=0;for(k=0;k<4;k=k+1)begin idx=ptr+k;if(!found&&e[idx[1:0]])begin grant[idx[1:0]]=1;found=1;end end end always @(posedge clk)begin if(!rst_n)ptr<=0;else if(grant[0])ptr<=1;else if(grant[1])ptr<=2;else if(grant[2])ptr<=3;else if(grant[3])ptr<=0;end endmodule`,
-    testbench: `module tb;reg clk=0,rst_n=0;reg[3:0]v=0,t=15,r=0;wire[3:0]g;hbm_channel_issue dut(clk,rst_n,v,t,r,g);always #5 clk=~clk;${pass}task step;input[3:0]vv,tt,rr,ee;begin @(negedge clk);v=vv;t=tt;r=rr;#1;check(g===ee);@(posedge clk);#1;end endtask initial begin repeat(2)@(posedge clk);rst_n=1;step(15,15,0,1);step(15,15,2,4);step(15,8,0,8);step(15,15,8,1);$display("@@PASS@@");$finish;end endmodule`,
+    title: { zh: 'HBM4 Channel Dual-Issue Capstone', en: 'HBM4 channel dual-issue capstone' },
+    description: { zh: '整合兩個 pseudo-channel 的 row/column legality、各自 round-robin policy、PHY backpressure 與最高優先 maintenance drain；一般模式可同拍發一個 row winner 與一個 column winner。', en: 'Integrate row/column legality for two pseudo-channels, independent round-robin policy, PHY backpressure, and highest-priority maintenance drain. Normal mode may issue one row winner and one column winner together.' },
+    specs: [{ zh: 'row_eligible=row_valid&row_timing_ok，col_eligible 同理；每個 grant 各自 one-hot，且只有 phy_ready 才能成立。', en: 'row_eligible=row_valid&row_timing_ok and similarly for columns; each grant is one-hot and requires phy_ready.' }, { zh: 'maintenance_valid 出現後阻擋一般 issue；只有 channel_quiescent 才 maint_grant。', en: 'maintenance_valid blocks normal issue; maint_grant additionally requires channel_quiescent.' }],
+    testGroups: [{ zh: 'row/column 同拍雙發', en: 'Concurrent row/column issue' }, { zh: '獨立 round-robin', en: 'Independent round-robin' }, { zh: 'maintenance drain 與 PHY stall', en: 'Maintenance drain and PHY stall' }],
+    hints: [{ zh: '先分別算 row/column eligible，再用兩個一位 pointer 選 PC；最後用 maintenance_valid 與 phy_ready gate commit。', en: 'Compute row/column eligibility separately, select each PC with an independent one-bit pointer, then gate commit with maintenance_valid and phy_ready.' }],
+    starter: `module hbm_channel_issue(input wire clk,input wire rst_n,input wire[1:0]row_valid,input wire[1:0]row_timing_ok,input wire[1:0]col_valid,input wire[1:0]col_timing_ok,input wire maintenance_valid,input wire channel_quiescent,input wire phy_ready,output reg[1:0]row_grant,output reg[1:0]col_grant,output wire maint_grant);assign maint_grant=maintenance_valid;always @*begin row_grant=row_valid;col_grant=col_valid;end endmodule`,
+    referenceSolution: `module hbm_channel_issue(input wire clk,input wire rst_n,input wire[1:0]row_valid,input wire[1:0]row_timing_ok,input wire[1:0]col_valid,input wire[1:0]col_timing_ok,input wire maintenance_valid,input wire channel_quiescent,input wire phy_ready,output reg[1:0]row_grant,output reg[1:0]col_grant,output wire maint_grant);reg row_ptr,col_ptr;wire[1:0]re=row_valid&row_timing_ok;wire[1:0]ce=col_valid&col_timing_ok;assign maint_grant=maintenance_valid&&channel_quiescent&&phy_ready;always @*begin row_grant=0;col_grant=0;if(!maintenance_valid&&phy_ready)begin if(row_ptr)begin if(re[1])row_grant=2'b10;else if(re[0])row_grant=2'b01;end else begin if(re[0])row_grant=2'b01;else if(re[1])row_grant=2'b10;end if(col_ptr)begin if(ce[1])col_grant=2'b10;else if(ce[0])col_grant=2'b01;end else begin if(ce[0])col_grant=2'b01;else if(ce[1])col_grant=2'b10;end end end always @(posedge clk)begin if(!rst_n)begin row_ptr<=0;col_ptr<=0;end else begin if(row_grant[0])row_ptr<=1;else if(row_grant[1])row_ptr<=0;if(col_grant[0])col_ptr<=1;else if(col_grant[1])col_ptr<=0;end end endmodule`,
+    testbench: `module tb;reg clk=0,rst_n=0,m=0,q=0,p=1;reg[1:0]rv=0,rt=3,cv=0,ct=3;wire[1:0]rg,cg;wire mg;hbm_channel_issue dut(clk,rst_n,rv,rt,cv,ct,m,q,p,rg,cg,mg);always #5 clk=~clk;${pass}initial begin repeat(2)@(posedge clk);rst_n=1;rv=3;cv=3;#1;check(rg==1&&cg==1&&!mg);@(posedge clk);#1;check(rg==2&&cg==2);rt=1;ct=2;@(posedge clk);#1;check(rg==1&&cg==2);m=1;q=0;#1;check(rg==0&&cg==0&&!mg);q=1;#1;check(mg&&rg==0&&cg==0);p=0;#1;check(!mg&&rg==0&&cg==0);m=0;#1;check(rg==0&&cg==0);$display("@@PASS@@");$finish;end endmodule`,
   },
   {
     id: 'lpddr-init-sequencer', order: 15, track: 'lpddr', difficulty: 'advanced', minutes: 65, points: 400,
@@ -410,3 +411,9 @@ initial begin repeat(2)@(posedge clk);rst_n=1;at=2;a=1;@(posedge clk);#1;a=0;che
     testbench: `module tb;reg v,l,c,t,r;wire ready,a,at,cc;pcie_admission dut(v,l,c,t,r,ready,a,at,cc);${pass}initial begin v=1;l=1;c=1;t=1;r=1;#1;check(ready&&a&&at&&cc);l=0;#1;check(!ready&&!a);l=1;c=0;#1;check(!a);c=1;t=0;#1;check(!a);t=1;r=0;#1;check(!a);r=1;v=0;#1;check(ready&&!a&&!at&&!cc);$display("@@PASS@@");$finish;end endmodule`,
   },
 ];
+
+const trackOrder: Record<Challenge['track'], number> = { dram: 0, hbm: 1, lpddr: 2, gddr: 3, pcie: 4 };
+
+export const controllerChallenges: Challenge[] = [...baseControllerChallenges, ...hbm4AdvancedChallenges]
+  .sort((a, b) => trackOrder[a.track] - trackOrder[b.track] || a.order - b.order)
+  .map((challenge, index) => ({ ...challenge, order: index + 1 }));

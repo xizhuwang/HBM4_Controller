@@ -4,7 +4,7 @@
 
 ## 繁體中文
 
-這是一套可直接在瀏覽器撰寫、編譯與模擬的進階 Controller RTL 互動式課程，共 30 題。基礎 RTL 題保留在獨立的 `rtl-interview-lab`；本專案不重複那些題目，只聚焦 DRAM／HBM／LPDDR／GDDR／PCIe 的專用電路、子系統整合與 controller capstone。
+這是一套可直接在瀏覽器撰寫、編譯與模擬的進階 Controller RTL 互動式課程，共 42 題。基礎 RTL 題保留在獨立的 `rtl-interview-lab`；本專案不重複那些題目，只聚焦 DRAM／HBM／LPDDR／GDDR／PCIe 的專用電路、子系統整合與 controller capstone。
 
 它的目標不是用「做完題目」取代工作年資，而是把面試與實務會要求的能力變成可重現證據：規格拆解、cycle-accurate RTL、protocol/timing guard、self-checking testbench、波形除錯、合成比較，以及 sign-off 邊界判斷。
 
@@ -15,7 +15,7 @@
 | 路徑 | 主題 | 代表題目 |
 |---|---|---|
 | DRAM（8 題） | mapping、bank FSM、timing wheel、FR-FCFS、refresh、write drain、command generator | legality 與 policy 分層，組成單 bank issue path |
-| HBM（5 題） | pseudo-channel mapping、bank-group timing、階層仲裁、獨立 refresh domain、channel capstone | 可擴展 channel／PC／bank 層級，不做巨大扁平 arbiter |
+| HBM（17 題） | 2-slot command、bank state、row/column timing、tFAW、turnaround、REF/RFM/DRFM、MRS、CA parity、power state、stack dispatch、channel capstone | 由 1 個 bank/PC/channel 擴展到 32 channel、64 PC、1024 bank，保留可合成的階層結構 |
 | LPDDR（4 題） | 低功耗序列、初始化/training handshake、DVFS quiesce、controller gate | traffic drain、power/isolation 與 PHY status 的安全順序 |
 | GDDR（4 題） | bus turnaround、command parity、CRC retry ownership、issue capstone | 高速共享資料匯流排與可靠度責任 |
 | PCIe（9 題） | TLP route、credits、tags、replay、completion reorder、LTSSM、admission capstone | Transaction/Data Link/MAC 分層與資源原子配置 |
@@ -25,6 +25,7 @@
 ### 線上互動功能
 
 - 每題先提供完整 micro-spec：功能邊界、全部 port 的方向／位寬／語意、clock/reset、ordered behavior、同拍 priority、逐拍範例與假設。
+- 每個 HBM 題目另外顯示 JESD270-4A 條款追溯、在完整 controller 的電路位置，以及教學縮小值與產品參數的邊界；文字為重述，不重製標準表格。
 - 繁體中文／英文題目、規格、提示與職務對應。
 - 瀏覽器內 Icarus Verilog 編譯與 self-checking simulation。
 - 每題都產生 VCD，可下載後用 GTKWave 等工具做 cycle-by-cycle 除錯。
@@ -49,7 +50,7 @@ pnpm dev
 
 1. 在 repository 的 **Settings → Pages → Build and deployment** 選擇 **GitHub Actions**。
 2. push 到 `main`。
-3. `.github/workflows/deploy-pages.yml` 會依序執行 install、410 項課程 regression、GitHub Pages build、release audit，成功後部署 `gh-pages/`。
+3. `.github/workflows/deploy-pages.yml` 會依序執行 install、完整課程 regression、GitHub Pages build、release audit，成功後部署 `gh-pages/`。
 
 若 repository 改名，請同步修改 `vite.github.config.ts` 的 `base`。
 
@@ -63,7 +64,7 @@ pnpm dev
 
 ## English
 
-Memory Controller RTL Lab is a browser-based advanced course for writing, compiling, simulating, debugging, and reviewing controller RTL. Its 30 labs are distinct from the foundation exercises in `rtl-interview-lab` and cover DRAM, HBM, LPDDR, GDDR, and PCIe from focused blocks through controller capstones.
+Memory Controller RTL Lab is a browser-based advanced course for writing, compiling, simulating, debugging, and reviewing controller RTL. Its 42 labs are distinct from the foundation exercises in `rtl-interview-lab` and cover DRAM, HBM, LPDDR, GDDR, and PCIe from focused blocks through controller capstones. Seventeen HBM4 labs trace their teaching contracts to JESD270-4A topics without reproducing the standard's normative tables.
 
 The course produces reproducible evidence of specification decomposition, cycle-accurate RTL, protocol and timing guards, self-checking verification, waveform debugging, and synthesis reasoning. It does not claim that completing a challenge set substitutes for senior-level project ownership.
 

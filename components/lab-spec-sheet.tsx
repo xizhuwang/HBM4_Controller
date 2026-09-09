@@ -1,15 +1,16 @@
-import { ArrowRight, Braces, Clock3, ListOrdered, ShieldCheck, TableProperties } from 'lucide-react';
+import { ArrowRight, BookMarked, Braces, Clock3, ListOrdered, ShieldCheck, TableProperties } from 'lucide-react';
 
 import { localize, type Challenge, type Locale } from '@/lib/challenges';
-import { labSpecs, parseModulePorts } from '@/lib/lab-specs';
+import { labReferences, labSpecs, parseModulePorts } from '@/lib/lab-specs';
 
 const labels = {
-  zh: { title: '實作前必讀 Micro-Spec', purpose: '你要做的電路', clocking: 'Clock / Reset 合約', ports: '介面定義', signal: '訊號', direction: '方向', width: '位寬', meaning: '精確語意', algorithm: '逐步行為規則', priority: '同拍事件優先順序', timing: '逐拍範例', cycle: '時間', drive: '輸入／前置狀態', expect: '必須觀察到', assumptions: '範圍與假設', start: '讀完 SPEC，開始寫 RTL' },
-  en: { title: 'Required micro-spec', purpose: 'Circuit you are building', clocking: 'Clock / reset contract', ports: 'Interface definition', signal: 'Signal', direction: 'Dir', width: 'Width', meaning: 'Exact semantics', algorithm: 'Ordered behavior rules', priority: 'Same-cycle event priority', timing: 'Cycle example', cycle: 'Time', drive: 'Inputs / prior state', expect: 'Required observation', assumptions: 'Scope and assumptions', start: 'Spec understood — start RTL' },
+  zh: { title: '實作前必讀 Micro-Spec', purpose: '你要做的電路', reference: '規格追溯', clocking: 'Clock / Reset 合約', ports: '介面定義', signal: '訊號', direction: '方向', width: '位寬', meaning: '精確語意', algorithm: '逐步行為規則', priority: '同拍事件優先順序', timing: '逐拍範例', cycle: '時間', drive: '輸入／前置狀態', expect: '必須觀察到', assumptions: '範圍與假設', start: '讀完 SPEC，開始寫 RTL' },
+  en: { title: 'Required micro-spec', purpose: 'Circuit you are building', reference: 'Specification trace', clocking: 'Clock / reset contract', ports: 'Interface definition', signal: 'Signal', direction: 'Dir', width: 'Width', meaning: 'Exact semantics', algorithm: 'Ordered behavior rules', priority: 'Same-cycle event priority', timing: 'Cycle example', cycle: 'Time', drive: 'Inputs / prior state', expect: 'Required observation', assumptions: 'Scope and assumptions', start: 'Spec understood — start RTL' },
 };
 
 export function LabSpecSheet({ challenge, locale, onStart }: { challenge: Challenge; locale: Locale; onStart: () => void }) {
   const item = labSpecs[challenge.id];
+  const reference = labReferences[challenge.id];
   const text = labels[locale];
   const ports = parseModulePorts(challenge.starter);
 
@@ -19,6 +20,8 @@ export function LabSpecSheet({ challenge, locale, onStart }: { challenge: Challe
         <div><span><Braces />{text.title}</span><h3>{text.purpose}</h3><p>{localize(item.purpose, locale)}</p></div>
         <button type="button" onClick={onStart}>{text.start}<ArrowRight /></button>
       </header>
+
+      {reference && <div className="spec-reference"><BookMarked /><div><span>{text.reference}</span><strong>{localize(reference.source, locale)}</strong><p>{localize(reference.topics, locale)}</p><small>{localize(reference.profile, locale)}</small></div></div>}
 
       <div className="spec-section clock-contract"><h3><Clock3 />{text.clocking}</h3><p>{localize(item.clocking, locale)}</p></div>
 

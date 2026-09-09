@@ -27,7 +27,7 @@ const storage = {
 
 const copy = {
   zh: {
-    product: 'Controller RTL Academy', subtitle: '獨立進階課程 · 不重複 RTL Interview Lab', search: '搜尋進階題目', curriculum: 'Controller 路徑', all: '全部', progress: '完成進度',
+    product: 'Controller RTL Academy', subtitle: 'HBM4 Spec → Architecture → RTL → Verification', search: '搜尋進階題目', curriculum: 'Controller 路徑', all: '全部', progress: '完成進度',
     spec: 'SPEC 與時序', lab: 'RTL 工作台', architecture: '架構與原理', review: 'Design Review', run: '執行 Regression', running: '模擬中…', synth: 'Generic Synthesis', reset: '重設 Starter',
     why: '為什麼一定要做', placement: '它在 Controller 哪裡', boundary: '數位／類比邊界', requirements: '可執行規格', tests: '驗收條件', hints: '分層提示',
     result: 'Regression Console', waiting: '修改 RTL 後執行 regression；編譯、錯誤與波形會留在這裡。', passed: '功能 Regression 通過', failed: '尚未通過',
@@ -35,7 +35,7 @@ const copy = {
     scope: '這些是公開、縮小但可執行的數位控制路徑。實際產品參數必須追溯到合法取得的標準、PHY 合約與 speed bin。', ref: '通過後檢視 Reference', hideRef: '返回你的 RTL', empty: '找不到符合條件的題目。', cells: 'generic cells',
   },
   en: {
-    product: 'Controller RTL Academy', subtitle: 'Independent advanced course · no RTL Interview Lab duplicates', search: 'Search advanced labs', curriculum: 'Controller paths', all: 'All', progress: 'Progress',
+    product: 'Controller RTL Academy', subtitle: 'HBM4 Spec → Architecture → RTL → Verification', search: 'Search advanced labs', curriculum: 'Controller paths', all: 'All', progress: 'Progress',
     spec: 'Spec & Timing', lab: 'RTL Workbench', architecture: 'Architecture & Why', review: 'Design Review', run: 'Run Regression', running: 'Simulating…', synth: 'Generic Synthesis', reset: 'Reset Starter',
     why: 'Why this block exists', placement: 'Where it sits', boundary: 'Digital / analog boundary', requirements: 'Executable requirements', tests: 'Acceptance tests', hints: 'Layered hints',
     result: 'Regression Console', waiting: 'Edit the RTL and run regression. Compile errors, failures, and waveforms stay here.', passed: 'Functional regression passed', failed: 'Not passed',
@@ -51,10 +51,19 @@ function rank(points: number) {
   return 'Block Designer';
 }
 
+const hbmStages = [
+  { id: 'organization', zh: '組織與命令', en: 'Organization & commands', labs: ['hbm-pseudo-channel-map', 'hbm-dual-command-gate', 'hbm-bank-state-table'] },
+  { id: 'timing', zh: '核心時序', en: 'Core timing', labs: ['hbm-row-timing-scoreboard', 'hbm-bankgroup-tccd', 'hbm-activate-window', 'hbm-rw-turnaround'] },
+  { id: 'scheduling', zh: '階層排程', en: 'Hierarchical scheduling', labs: ['hbm-hierarchical-arbiter'] },
+  { id: 'maintenance', zh: 'Refresh / RFM / DRFM', en: 'Refresh / RFM / DRFM', labs: ['hbm-refresh-credit', 'hbm-refresh-domain', 'hbm-rfm-counter', 'hbm-drfm-sequencer'] },
+  { id: 'control', zh: '設定、可靠度與電源', en: 'Config, RAS & power', labs: ['hbm-mrs-quiesce', 'hbm-ca-parity', 'hbm-power-state'] },
+  { id: 'integration', zh: '32-Channel 整合', en: '32-channel integration', labs: ['hbm-stack-dispatch', 'hbm-channel-capstone'] },
+];
+
 export default function Home() {
   const [locale, setLocale] = useState<Locale>('zh');
-  const [selectedId, setSelectedId] = useState(challenges[0].id);
-  const [track, setTrack] = useState<TrackId | 'all'>('all');
+  const [selectedId, setSelectedId] = useState('hbm-pseudo-channel-map');
+  const [track, setTrack] = useState<TrackId | 'all'>('hbm');
   const [query, setQuery] = useState('');
   const [view, setView] = useState<ViewMode>('spec');
   const [solutions, setSolutions] = useState<Record<string, string>>({});
@@ -165,6 +174,7 @@ export default function Home() {
 
         <section className="workbench">
           <div className="lesson-heading"><div><div className="lesson-meta"><span>{current.track.toUpperCase()}</span><span>{localize(difficultyLabel[current.difficulty], locale)}</span><span><Clock3 />{current.minutes} min</span><span>+{current.points} pts</span></div><h2>{localize(current.title, locale)}</h2><p>{localize(current.description, locale)}</p></div><button type="button" className="next-button" onClick={() => selectChallenge(nextChallenge.id)}>{text.next}<ChevronRight /></button></div>
+          {current.track === 'hbm' && <section className="hbm-roadmap"><header><div><span>JESD270-4A LEARNING PATH</span><h3>{locale === 'zh' ? '從 HBM4 規格一路組成可驗證 Controller' : 'Build a verifiable controller from the HBM4 specification'}</h3></div><strong>{challenges.filter((item) => item.track === 'hbm').length} LABS</strong></header><div>{hbmStages.map((stage, index) => { const completed = stage.labs.filter((id) => solved.includes(id)).length; const active = stage.labs.includes(current.id); return <button key={stage.id} type="button" data-active={active} onClick={() => selectChallenge(stage.labs[0])}><i>{String(index + 1).padStart(2, '0')}</i><span><b>{locale === 'zh' ? stage.zh : stage.en}</b><small>{completed}/{stage.labs.length}</small></span></button>; })}</div></section>}
           <div className="view-tabs" role="tablist" aria-label="Lesson view"><button type="button" role="tab" aria-selected={view === 'spec'} onClick={() => setView('spec')}><ScrollText />{text.spec}</button><button type="button" role="tab" aria-selected={view === 'lab'} onClick={() => setView('lab')}><Code2 />{text.lab}</button><button type="button" role="tab" aria-selected={view === 'architecture'} onClick={() => setView('architecture')}><Map />{text.architecture}</button><button type="button" role="tab" aria-selected={view === 'review'} onClick={() => setView('review')}><GraduationCap />{text.review}</button></div>
 
           {view === 'spec' && <LabSpecSheet challenge={current} locale={locale} onStart={() => setView('lab')} />}
