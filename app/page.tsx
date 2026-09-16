@@ -1,11 +1,12 @@
 'use client';
+/* eslint-disable next/no-img-element -- Shared mascot art is hosted by the sibling static Academy and selected dynamically from shared progress. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity, BookOpen, Boxes, Check, CheckCircle2, ChevronRight, Circle, Clock3,
   Code2, Coins, Cpu, ExternalLink, FileCode2, Gauge, GraduationCap, Languages,
   Lightbulb, LoaderCircle, Map, Play, RotateCcw, ScrollText, Search, ShieldAlert,
-  TerminalSquare, TestTube2, Trophy, XCircle,
+  Sparkles, TerminalSquare, TestTube2, Trophy, X, XCircle,
 } from 'lucide-react';
 
 import { ArchitectureDiagram } from '@/components/architecture-diagram';
@@ -26,6 +27,9 @@ const sharedKeys = {
   gender: 'soc-rtl-lab:mascot-gender',
   profession: 'soc-rtl-lab:mascot-profession',
   equipment: 'soc-rtl-lab:equipment-inventory',
+  equippedEquipmentUid: 'soc-rtl-lab:equipped-equipment-uid',
+  consumables: 'soc-rtl-lab:consumables',
+  elementLevels: 'soc-rtl-lab:element-levels',
   element: 'soc-rtl-lab:equipped-element',
   equipmentSpend: 'soc-rtl-lab:equipment-spend',
   enhancementSpend: 'soc-rtl-lab:enhancement-spend',
@@ -33,6 +37,43 @@ const sharedKeys = {
   elementSpend: 'soc-rtl-lab:element-spend',
   resaleCredits: 'soc-rtl-lab:resale-credits',
   dailyProgress: 'soc-rtl-lab:daily-progress',
+};
+
+type SharedProfession = 'novice' | 'cpu' | 'soc' | 'dft' | 'timing';
+type SharedGender = 'masculine' | 'feminine';
+type SharedElement = 'fire' | 'water' | 'wind' | 'earth';
+type SharedElementLoadout = SharedElement | 'four-roots' | 'none';
+type SharedEquipmentId = 'cpuBlade' | 'cpuShield' | 'socQuiver' | 'socCompass' | 'dftLantern' | 'dftProbe' | 'timingGrimoire' | 'lowPowerCharm';
+type SharedEquipment = { uid: string; id: SharedEquipmentId; stars: number };
+type SharedConsumables = { visor: number; crystal: number; drone: number; hammer: number };
+type SharedProfile = {
+  wallet: number; socEarned: number; gender: SharedGender; profession: SharedProfession;
+  element: SharedElementLoadout; equipment: SharedEquipment[]; equippedEquipmentUid: string;
+  elementLevels: Record<SharedElement, number>; consumables: SharedConsumables;
+};
+
+const professionNames: Record<SharedProfession, { zh: string; en: string }> = {
+  novice: { zh: '邏輯學徒', en: 'Logic Apprentice' }, cpu: { zh: '電子劍士', en: 'Electronic Swordsman' },
+  soc: { zh: '電子弓箭手', en: 'Electronic Archer' }, dft: { zh: '電子補師', en: 'Electronic Healer' },
+  timing: { zh: '電子魔法師', en: 'Electronic Mage' },
+};
+const equipmentCatalog: Record<SharedEquipmentId, { profession: SharedProfession; icon: string; zh: string; en: string }> = {
+  cpuBlade: { profession: 'cpu', icon: '⚔️', zh: 'Forwarding 光刃', en: 'Forwarding Blade' },
+  cpuShield: { profession: 'cpu', icon: '🛡️', zh: 'Pipeline 護盾', en: 'Pipeline Shield' },
+  socQuiver: { profession: 'soc', icon: '🏹', zh: 'AXI 箭匣', en: 'AXI Quiver' },
+  socCompass: { profession: 'soc', icon: '🧭', zh: 'Interconnect 羅盤', en: 'Interconnect Compass' },
+  dftLantern: { profession: 'dft', icon: '🏮', zh: 'Scan 診斷燈', en: 'Scan Diagnostic Lantern' },
+  dftProbe: { profession: 'dft', icon: '🔎', zh: 'Fault 探針', en: 'Fault Probe' },
+  timingGrimoire: { profession: 'timing', icon: '📖', zh: 'STA 魔導書', en: 'STA Grimoire' },
+  lowPowerCharm: { profession: 'timing', icon: '🌙', zh: 'Low-Power 月墜', en: 'Low-Power Moon Charm' },
+};
+const elementCatalog: Record<SharedElement, { icon: string; zh: string; en: string }> = {
+  fire: { icon: '🔥', zh: '火', en: 'Fire' }, water: { icon: '💧', zh: '水', en: 'Water' },
+  wind: { icon: '🌪️', zh: '風', en: 'Wind' }, earth: { icon: '🪨', zh: '土', en: 'Earth' },
+};
+const consumableNames: Record<keyof SharedConsumables, { icon: string; zh: string; en: string }> = {
+  visor: { icon: '🥽', zh: 'Debug 護目鏡', en: 'Debug Visor' }, crystal: { icon: '💎', zh: 'Timing 水晶', en: 'Timing Crystal' },
+  drone: { icon: '🤖', zh: '晶片夥伴', en: 'Chip Companion' }, hammer: { icon: '🔨', zh: '鍛造鐵鎚', en: 'Forge Hammer' },
 };
 const storage = {
   get(key: string) { try { return localStorage.getItem(key); } catch { return null; } },
@@ -100,24 +141,41 @@ function parseSolved(raw: string | null) {
 
 function readSharedProfile(hbmEarned: number) {
   let dailyCredits = 0;
-  let equipmentCount = 0;
+  let equipment: SharedEquipment[] = [];
+  let consumables: SharedConsumables = { visor: 0, crystal: 0, drone: 0, hammer: 0 };
+  let elementLevels: Record<SharedElement, number> = { fire: 0, water: 0, wind: 0, earth: 0 };
   try {
     const daily = JSON.parse(localStorage.getItem(sharedKeys.dailyProgress) ?? '{}') as { rewardCredits?: unknown };
     dailyCredits = Math.max(0, Number(daily.rewardCredits) || 0);
-    const equipment = JSON.parse(localStorage.getItem(sharedKeys.equipment) ?? '[]');
-    equipmentCount = Array.isArray(equipment) ? equipment.length : 0;
+    const rawEquipment: unknown = JSON.parse(localStorage.getItem(sharedKeys.equipment) ?? '[]');
+    if (Array.isArray(rawEquipment)) equipment = rawEquipment.filter((item): item is SharedEquipment => Boolean(item && typeof item === 'object' && typeof item.uid === 'string' && typeof item.id === 'string' && item.id in equipmentCatalog)).map((item) => ({ ...item, stars: Math.max(0, Number(item.stars) || 0) }));
+    const rawConsumables = JSON.parse(localStorage.getItem(sharedKeys.consumables) ?? '{}') as Partial<Record<keyof SharedConsumables, unknown>>;
+    consumables = Object.fromEntries((Object.keys(consumables) as (keyof SharedConsumables)[]).map((id) => [id, Math.max(0, Number(rawConsumables[id]) || 0)])) as SharedConsumables;
+    const rawElements = JSON.parse(localStorage.getItem(sharedKeys.elementLevels) ?? '{}') as Partial<Record<SharedElement, unknown>>;
+    elementLevels = Object.fromEntries((Object.keys(elementLevels) as SharedElement[]).map((id) => [id, Math.max(0, Number(rawElements[id]) || 0)])) as Record<SharedElement, number>;
   } catch { /* malformed legacy data is ignored, never overwritten */ }
   const socEarned = readNumber(sharedKeys.socEarned);
   const spent = readNumber(sharedKeys.equipmentSpend) + readNumber(sharedKeys.enhancementSpend) + readNumber(sharedKeys.consumableSpend) + readNumber(sharedKeys.elementSpend);
   const wallet = Math.max(0, socEarned + hbmEarned - spent + readNumber(sharedKeys.resaleCredits) + dailyCredits);
+  const rawGender = localStorage.getItem(sharedKeys.gender);
+  const rawProfession = localStorage.getItem(sharedKeys.profession);
+  const rawElement = localStorage.getItem(sharedKeys.element);
   return {
     wallet,
     socEarned,
-    gender: localStorage.getItem(sharedKeys.gender) ?? 'masculine',
-    profession: localStorage.getItem(sharedKeys.profession) ?? 'novice',
-    element: localStorage.getItem(sharedKeys.element) || 'none',
-    equipmentCount,
-  };
+    gender: rawGender === 'feminine' ? 'feminine' : 'masculine',
+    profession: rawProfession && rawProfession in professionNames ? rawProfession as SharedProfession : 'novice',
+    element: rawElement && (rawElement === 'none' || rawElement === 'four-roots' || rawElement in elementCatalog) ? rawElement as SharedElementLoadout : 'none',
+    equipment,
+    equippedEquipmentUid: localStorage.getItem(sharedKeys.equippedEquipmentUid) ?? '',
+    elementLevels,
+    consumables,
+  } satisfies SharedProfile;
+}
+
+function mascotImage(profile: SharedProfile) {
+  const profession = profile.gender === 'masculine' && profile.profession === 'soc' ? 'soc-v2' : profile.profession;
+  return `https://xizhuwang.github.io/rtl-interview-lab/mascot/penguin-${profile.gender}-${profession}.png`;
 }
 
 export default function Home() {
@@ -136,7 +194,8 @@ export default function Home() {
   const [waveform, setWaveform] = useState('');
   const [area, setArea] = useState<AreaResult | null>(null);
   const [synthesizing, setSynthesizing] = useState(false);
-  const [sharedProfile, setSharedProfile] = useState({ wallet: 0, socEarned: 0, gender: 'masculine', profession: 'novice', element: 'none', equipmentCount: 0 });
+  const [sharedProfile, setSharedProfile] = useState<SharedProfile>({ wallet: 0, socEarned: 0, gender: 'masculine', profession: 'novice', element: 'none', equipment: [], equippedEquipmentUid: '', elementLevels: { fire: 0, water: 0, wind: 0, earth: 0 }, consumables: { visor: 0, crystal: 0, drone: 0, hammer: 0 } });
+  const [backpackOpen, setBackpackOpen] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const pendingRun = useRef<string | null>(null);
   const pendingSynth = useRef<string | null>(null);
@@ -154,6 +213,7 @@ export default function Home() {
   }), [query, track]);
   const currentIndex = challenges.findIndex((challenge) => challenge.id === current.id);
   const nextChallenge = challenges[(currentIndex + 1) % challenges.length];
+  const equippedItem = sharedProfile.equipment.find((item) => item.uid === sharedProfile.equippedEquipmentUid);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -232,6 +292,18 @@ export default function Home() {
     const requestId = `synth-${Date.now()}`; pendingSynth.current = requestId; setSynthesizing(true); setArea(null);
     iframeRef.current.contentWindow.postMessage({ type: 'SOC_RTL_SYNTH', requestId, design: code, reference: current.referenceSolution ?? '', generation: '2005' }, window.location.origin);
   };
+  const equipSharedItem = (uid: string) => {
+    const item = sharedProfile.equipment.find((candidate) => candidate.uid === uid);
+    if (item && equipmentCatalog[item.id].profession !== sharedProfile.profession) return;
+    localStorage.setItem(sharedKeys.equippedEquipmentUid, uid);
+    setSharedProfile(readSharedProfile(points));
+  };
+  const equipSharedElement = (element: SharedElementLoadout) => {
+    const owned = element === 'none' || (element === 'four-roots' ? Object.values(sharedProfile.elementLevels).every((level) => level > 0) : sharedProfile.elementLevels[element] > 0);
+    if (!owned) return;
+    localStorage.setItem(sharedKeys.element, element);
+    setSharedProfile(readSharedProfile(points));
+  };
 
   return (
     <main className="academy-shell">
@@ -246,24 +318,19 @@ export default function Home() {
           <label className="search-box"><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={text.search} /></label>
           <div className="panel-kicker"><span>{text.curriculum}</span><strong>{challenges.length}</strong></div>
           <nav className="track-list" aria-label={text.curriculum}><button type="button" className={track === 'all' ? 'selected' : ''} onClick={() => setTrack('all')}><Boxes /><span>{text.all}</span><b>{challenges.length}</b></button>{tracks.map((item) => <button key={item.id} type="button" className={track === item.id ? 'selected' : ''} onClick={() => setTrack(item.id)}><span className={`track-dot ${item.id}`} /><span>{localize(item.label, locale)}</span><b>{challenges.filter((challenge) => challenge.track === item.id).length}</b></button>)}</nav>
+          {(track === 'hbm' || current.track === 'hbm') && <details className="sidebar-roadmap"><summary><span><b>COMPLETE HBM4 LEARNING PATH</b><small>{locale === 'zh' ? '14 模組 · Controller 到系統效能' : '14 modules · controller to system'}</small></span><strong>{challenges.filter((item) => item.track === 'hbm').length} LABS</strong></summary><div>{hbmStages.map((stage, index) => { const completed = stage.labs.filter((id) => solved.includes(id)).length; const active = stage.labs.includes(current.id); return <button key={stage.id} type="button" data-active={active} onClick={() => selectChallenge(stage.labs[0])}><i>{String(index + 1).padStart(2, '0')}</i><span><b>{locale === 'zh' ? stage.zh : stage.en}</b><small>{completed}/{stage.labs.length}</small></span></button>; })}</div></details>}
           <div className="lesson-list">{filtered.length ? filtered.map((item) => <button key={item.id} type="button" className={current.id === item.id ? 'current' : ''} onClick={() => selectChallenge(item.id)}>{solved.includes(item.id) ? <CheckCircle2 /> : <Circle />}<span><strong>{String(item.order).padStart(2, '0')} · {localize(item.title, locale)}</strong><small>{item.id}</small></span></button>) : <p className="empty-list">{text.empty}</p>}</div>
-          <section className="shared-profile-card" aria-label={locale === 'zh' ? '跨 Academy 共用進度' : 'Shared academy progress'}>
-            <div><Coins /><span>{locale === 'zh' ? '共用冒險進度' : 'Shared adventure profile'}</span><strong>{sharedProfile.wallet}</strong></div>
-            <p>{locale === 'zh' ? 'SoC 與 HBM4 共用金幣、角色、職業、屬性與背包；兩邊的解題清單仍各自保存。' : 'SoC and HBM4 share coins, character, profession, element, and inventory while keeping solved lists separate.'}</p>
-            <dl>
-              <div><dt>{locale === 'zh' ? '角色' : 'Character'}</dt><dd>{sharedProfile.gender === 'feminine' ? (locale === 'zh' ? '女企鵝' : 'Female penguin') : (locale === 'zh' ? '男企鵝' : 'Male penguin')}</dd></div>
-              <div><dt>{locale === 'zh' ? '職業' : 'Class'}</dt><dd>{sharedProfile.profession}</dd></div>
-              <div><dt>{locale === 'zh' ? '屬性' : 'Element'}</dt><dd>{sharedProfile.element}</dd></div>
-              <div><dt>{locale === 'zh' ? '裝備' : 'Gear'}</dt><dd>{sharedProfile.equipmentCount}</dd></div>
-            </dl>
-            <a href="https://xizhuwang.github.io/rtl-interview-lab/">{locale === 'zh' ? '回 SoC RTL Academy 管理背包' : 'Manage inventory in SoC RTL Academy'}<ChevronRight /></a>
+          <section className="shared-profile-card" aria-label={locale === 'zh' ? '跨 Academy 共用夥伴與背包' : 'Shared academy companion and inventory'}>
+            <div><Coins /><span>{locale === 'zh' ? '共用夥伴與背包' : 'Shared companion & inventory'}</span><strong>{sharedProfile.wallet}</strong></div>
+            <div className={`shared-companion element-${sharedProfile.element}`}><img src={mascotImage(sharedProfile)} alt={locale === 'zh' ? '共用企鵝夥伴' : 'Shared penguin companion'} /><span><b>{professionNames[sharedProfile.profession][locale]}</b><small>{equippedItem ? `${equipmentCatalog[equippedItem.id].icon} ${equipmentCatalog[equippedItem.id][locale]} +${equippedItem.stars}` : (locale === 'zh' ? '尚未裝備' : 'No gear equipped')}</small></span></div>
+            <button className="open-backpack-button" type="button" onClick={() => setBackpackOpen(true)}><Sparkles />{locale === 'zh' ? '開啟共用夥伴與背包' : 'Open shared companion & inventory'}</button>
+            <a href="https://xizhuwang.github.io/rtl-interview-lab/">{locale === 'zh' ? '前往 SoC 商店與鍛造' : 'Open the SoC shop and forge'}<ChevronRight /></a>
           </section>
           <div className="progress-block"><div><span>{text.progress}</span><b>{solved.length}/{challenges.length}</b></div><div className="progress-track"><i style={{ width: `${(solved.length / challenges.length) * 100}%` }} /></div><p><Trophy />{rank(points)}<strong>{points} pts</strong></p></div>
         </aside>
 
         <section className="workbench">
           <div className="lesson-heading"><div><div className="lesson-meta"><span>{current.track.toUpperCase()}</span><span>{localize(difficultyLabel[current.difficulty], locale)}</span><span><Clock3 />{current.minutes} min</span><span>+{current.points} pts</span></div><h2>{localize(current.title, locale)}</h2><p>{localize(current.description, locale)}</p></div><button type="button" className="next-button" onClick={() => selectChallenge(nextChallenge.id)}>{text.next}<ChevronRight /></button></div>
-          {current.track === 'hbm' && <section className="hbm-roadmap"><header><div><span>COMPLETE HBM4 LEARNING PATH</span><h3>{locale === 'zh' ? '14 模組：Controller、PHY 介面、RAS、修復、封裝與系統效能' : '14 modules: controller, PHY interface, RAS, repair, package, and system performance'}</h3></div><strong>{challenges.filter((item) => item.track === 'hbm').length} LABS</strong></header><div>{hbmStages.map((stage, index) => { const completed = stage.labs.filter((id) => solved.includes(id)).length; const active = stage.labs.includes(current.id); return <button key={stage.id} type="button" data-active={active} onClick={() => selectChallenge(stage.labs[0])}><i>{String(index + 1).padStart(2, '0')}</i><span><b>{locale === 'zh' ? stage.zh : stage.en}</b><small>{completed}/{stage.labs.length}</small></span></button>; })}</div></section>}
           <div className="view-tabs" role="tablist" aria-label="Lesson view"><button type="button" role="tab" aria-selected={view === 'spec'} onClick={() => setView('spec')}><ScrollText />{text.spec}</button><button type="button" role="tab" aria-selected={view === 'lab'} onClick={() => setView('lab')}><Code2 />{text.lab}</button><button type="button" role="tab" aria-selected={view === 'architecture'} onClick={() => setView('architecture')}><Map />{text.architecture}</button><button type="button" role="tab" aria-selected={view === 'review'} onClick={() => setView('review')}><GraduationCap />{text.review}</button></div>
 
           {view === 'spec' && <LabSpecSheet challenge={current} locale={locale} onStart={() => setView('lab')} />}
@@ -284,6 +351,7 @@ export default function Home() {
           <p className="scope-note">{text.scope}</p>
         </aside>
       </div>
+      {backpackOpen && <div className="shared-backpack-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setBackpackOpen(false); }}><dialog open className="shared-backpack-dialog" aria-labelledby="shared-backpack-title"><header><div><span>{locale === 'zh' ? '跨 Academy 共用資料' : 'Shared Academy data'}</span><h2 id="shared-backpack-title">{locale === 'zh' ? '夥伴與背包' : 'Companion & Inventory'}</h2></div><button type="button" aria-label={locale === 'zh' ? '關閉背包' : 'Close inventory'} onClick={() => setBackpackOpen(false)}><X /></button></header><div className="shared-backpack-grid"><article className={`shared-companion-preview element-${sharedProfile.element}`}><img src={mascotImage(sharedProfile)} alt="" /><h3>{professionNames[sharedProfile.profession][locale]}</h3><p>{locale === 'zh' ? '角色、職業、裝備與屬性會同步回 SoC RTL Academy。' : 'Character, class, gear, and element sync back to SoC RTL Academy.'}</p>{equippedItem && <strong>{equipmentCatalog[equippedItem.id].icon} {equipmentCatalog[equippedItem.id][locale]} · +{equippedItem.stars}</strong>}</article><div className="shared-inventory"><section><h3>{locale === 'zh' ? `裝備（${sharedProfile.equipment.length}）` : `Gear (${sharedProfile.equipment.length})`}</h3><div className="inventory-options"><button type="button" aria-pressed={!sharedProfile.equippedEquipmentUid} onClick={() => equipSharedItem('')}>{locale === 'zh' ? '卸下裝備' : 'Unequip'}</button>{sharedProfile.equipment.map((item) => { const meta = equipmentCatalog[item.id]; const usable = meta.profession === sharedProfile.profession; return <button key={item.uid} type="button" disabled={!usable} aria-pressed={item.uid === sharedProfile.equippedEquipmentUid} onClick={() => equipSharedItem(item.uid)}><span>{meta.icon}</span><b>{meta[locale]}</b><small>+{item.stars}{!usable ? ` · ${professionNames[meta.profession][locale]}` : ''}</small></button>; })}</div>{sharedProfile.equipment.length === 0 && <p>{locale === 'zh' ? '背包還沒有裝備，可到 SoC Academy 商店取得。' : 'No gear yet. Visit the SoC Academy shop.'}</p>}</section><section><h3>{locale === 'zh' ? '屬性裝備' : 'Element loadout'}</h3><div className="element-options"><button type="button" aria-pressed={sharedProfile.element === 'none'} onClick={() => equipSharedElement('none')}>{locale === 'zh' ? '無屬性' : 'None'}</button>{(Object.keys(elementCatalog) as SharedElement[]).map((id) => <button key={id} type="button" disabled={sharedProfile.elementLevels[id] === 0} aria-pressed={sharedProfile.element === id} onClick={() => equipSharedElement(id)}>{elementCatalog[id].icon} {elementCatalog[id][locale]} Lv.{sharedProfile.elementLevels[id]}</button>)}<button type="button" disabled={!Object.values(sharedProfile.elementLevels).every((level) => level > 0)} aria-pressed={sharedProfile.element === 'four-roots'} onClick={() => equipSharedElement('four-roots')}>✨ {locale === 'zh' ? '四靈根' : 'Four Roots'}</button></div></section><section><h3>{locale === 'zh' ? '消耗品' : 'Consumables'}</h3><div className="consumable-list">{(Object.keys(consumableNames) as (keyof SharedConsumables)[]).map((id) => <span key={id}><i>{consumableNames[id].icon}</i><b>{consumableNames[id][locale]}</b><strong>×{sharedProfile.consumables[id]}</strong></span>)}</div></section></div></div><footer><a href="https://xizhuwang.github.io/rtl-interview-lab/">{locale === 'zh' ? '前往完整商店、鍛造與角色設定' : 'Open the full shop, forge, and character settings'}<ExternalLink /></a></footer></dialog></div>}
     </main>
   );
 }
