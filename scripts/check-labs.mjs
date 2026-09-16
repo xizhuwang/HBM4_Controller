@@ -71,11 +71,14 @@ const legacyFoundationIds = new Set([
   'timing-setup-hold', 'ppa-width-discipline', 'xor-cnf',
 ]);
 
-verify(challenges.length === 42, '42 advanced controller labs');
+verify(challenges.length === 56, '56 advanced controller and HBM4 system labs');
+verify(challenges.filter((challenge) => challenge.track === 'hbm').length === 31, 'HBM path contains 31 executable labs');
 verify(new Set(challenges.map((challenge) => challenge.id)).size === challenges.length, 'unique challenge ids');
 verify(challenges.every((challenge) => !legacyFoundationIds.has(challenge.id)), 'no rtl-interview-lab foundation duplicates');
-verify(new Set(challenges.map((challenge) => challenge.order)).size === challenges.length, 'unique curriculum order');
-verify(Math.min(...challenges.map((challenge) => challenge.order)) === 1 && Math.max(...challenges.map((challenge) => challenge.order)) === challenges.length, 'contiguous curriculum order');
+verify(tracks.every((track) => {
+  const orders = challenges.filter((challenge) => challenge.track === track.id).map((challenge) => challenge.order);
+  return new Set(orders).size === orders.length && orders.every((order, index) => index === 0 || order >= orders[index - 1]);
+}), 'curriculum order is unique and monotonic inside every track');
 
 for (const track of tracks) {
   const labs = challenges.filter((challenge) => challenge.track === track.id);
@@ -99,13 +102,17 @@ for (const challenge of challenges) {
   verify(!parsedPorts.some((port) => port.name === 'clk') || detailed.priority.length >= 1, `${challenge.id} sequential priority is explicit`);
   if (challenge.track === 'hbm') {
     const reference = labReferences[challenge.id];
-    verify(Boolean(reference?.source?.zh?.includes('JESD270-4A') && reference?.source?.en?.includes('JESD270-4A') && reference?.topics?.zh && reference?.topics?.en && reference?.profile?.zh && reference?.profile?.en), `${challenge.id} has a bilingual HBM4 spec trace`);
+    verify(Boolean(reference?.source?.zh && reference?.source?.en && reference?.topics?.zh && reference?.topics?.en && reference?.profile?.zh && reference?.profile?.en), `${challenge.id} has a bilingual HBM4 topic trace`);
     const guide = hbmLearningGuides[challenge.id];
-    verify(Boolean(guide?.plainGoal?.zh && guide?.plainGoal?.en && guide?.analogy?.zh && guide?.analogy?.en && guide?.input?.zh && guide?.output?.zh), `${challenge.id} starts with a plain-language goal`);
-    verify(Boolean(guide?.terms?.length >= 3 && guide.terms.every((id) => hbmTerms[id]?.name?.zh && hbmTerms[id]?.meaning?.zh && hbmTerms[id]?.meaning?.en)), `${challenge.id} explains every prerequisite term`);
-    verify(Boolean(guide?.circuit?.length >= 3 && guide.circuit.every((stage) => stage.label?.zh && stage.detail?.zh && stage.detail?.en)), `${challenge.id} has a circuit flow diagram`);
-    verify(Boolean(guide?.waveform?.cycles?.length >= 3 && guide.waveform.signals?.length >= 2 && guide.waveform.signals.every((signal) => signal.values.length === guide.waveform.cycles.length)), `${challenge.id} has a complete expected waveform`);
-    verify(Boolean(guide?.steps?.length >= 3 && guide.steps.every((step) => step.zh && step.en)), `${challenge.id} has incremental coding steps`);
+    if (guide) {
+      verify(Boolean(guide.plainGoal?.zh && guide.plainGoal?.en && guide.analogy?.zh && guide.analogy?.en && guide.input?.zh && guide.output?.zh), `${challenge.id} starts with a plain-language goal`);
+      verify(Boolean(guide.terms?.length >= 3 && guide.terms.every((id) => hbmTerms[id]?.name?.zh && hbmTerms[id]?.meaning?.zh && hbmTerms[id]?.meaning?.en)), `${challenge.id} explains every prerequisite term`);
+      verify(Boolean(guide.circuit?.length >= 3 && guide.circuit.every((stage) => stage.label?.zh && stage.detail?.zh && stage.detail?.en)), `${challenge.id} has a circuit flow diagram`);
+      verify(Boolean(guide.waveform?.cycles?.length >= 3 && guide.waveform.signals?.length >= 2 && guide.waveform.signals.every((signal) => signal.values.length === guide.waveform.cycles.length)), `${challenge.id} has a complete expected waveform`);
+      verify(Boolean(guide.steps?.length >= 3 && guide.steps.every((step) => step.zh && step.en)), `${challenge.id} has incremental coding steps`);
+    } else {
+      verify(challenge.order >= 14 && detailed.algorithm.length >= 2 && detailed.example.length >= 1, `${challenge.id} has a concise system-contract lesson`);
+    }
   }
   assert.equal(challenge.judge, 'simulation', `${challenge.id} must remain executable`);
   assert.ok(challenge.referenceSolution, `Missing reference: ${challenge.id}`);

@@ -223,7 +223,7 @@ button { color: inherit; }
 .view-tabs button:hover { color: #dbe9ee; }.view-tabs button[aria-selected='true'] { border-bottom-color: #36d7d0; color: #73ece6; background: linear-gradient(180deg, transparent, rgba(54, 215, 208, .07)); }
 .view-tabs svg { width: 17px; }
 
-.spec-sheet { display: grid; gap: 14px; }
+.spec-sheet { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 14px; }
 .spec-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 28px; padding: 24px; border: 1px solid #2f5c65; background: linear-gradient(135deg, #102d35, #0b1b25 62%); box-shadow: inset 4px 0 #45dcd5; }
 .spec-hero > div > span { display: inline-flex; align-items: center; gap: 8px; color: #69e6df; font: 12px var(--font-geist-mono); letter-spacing: .06em; text-transform: uppercase; }
 .spec-hero svg { width: 17px; }.spec-hero h3 { margin: 13px 0 7px; font-size: 21px; }.spec-hero p { max-width: 850px; margin: 0; color: #b8c9d0; font-size: 16px; line-height: 1.75; }
@@ -450,7 +450,7 @@ html, body { background: #f3f6fa; color: #172033; }
 .hbm-roadmap header h3 { margin: 5px 0 0; color: #223049; font-size: 17px; }
 .hbm-roadmap header > strong { flex: 0 0 auto; padding: 7px 10px; border-radius: 7px; background: #17233a; color: #fff; font: 12px var(--font-geist-mono); letter-spacing: .06em; }
 .hbm-roadmap > div { display: grid; overflow-x: auto; }
-.hbm-roadmap > div { grid-template-columns: repeat(6, minmax(140px, 1fr)); }
+.hbm-roadmap > div { grid-template-columns: repeat(7, minmax(140px, 1fr)); }
 .hbm-roadmap button { display: grid; grid-template-columns: 30px 1fr; gap: 9px; align-items: center; min-height: 64px; padding: 10px 12px; border: 0; border-right: 1px solid #e3e8ef; background: #fff; color: #536178; text-align: left; cursor: pointer; }
 .hbm-roadmap button:last-child { border-right: 0; }
 .hbm-roadmap button:hover { background: #f3f6fb; }
@@ -460,6 +460,19 @@ html, body { background: #f3f6fa; color: #172033; }
 .hbm-roadmap button span { min-width: 0; }
 .hbm-roadmap button b { display: block; font-size: 13px; line-height: 1.35; }
 .hbm-roadmap button small { display: block; margin-top: 4px; color: #8a95a7; font: 12px var(--font-geist-mono); }
+
+.shared-profile-card { margin: 12px 0; padding: 13px; border: 1px solid #c8d6ec; border-radius: 10px; background: linear-gradient(145deg, #f0f6ff, #fff); }
+.shared-profile-card > div:first-child { display: flex; align-items: center; gap: 7px; color: #174aaf; }
+.shared-profile-card > div:first-child svg { width: 18px; }
+.shared-profile-card > div:first-child span { flex: 1; font-size: 13px; font-weight: 700; }
+.shared-profile-card > div:first-child strong { padding: 4px 7px; border-radius: 999px; background: #fff0bd; color: #7a4b00; font: 700 12px var(--font-geist-mono); }
+.shared-profile-card > p { margin: 9px 0; color: #66738a; font-size: 11px; line-height: 1.5; }
+.shared-profile-card dl { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 10px; margin: 0; }
+.shared-profile-card dl > div { min-width: 0; }
+.shared-profile-card dt { color: #8994a6; font-size: 10px; }
+.shared-profile-card dd { overflow: hidden; margin: 1px 0 0; color: #34445f; font: 600 11px var(--font-geist-mono); text-overflow: ellipsis; white-space: nowrap; }
+.shared-profile-card > a { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 10px; color: #155eef; font-size: 11px; font-weight: 700; text-decoration: none; }
+.shared-profile-card > a svg { width: 14px; }
 
 .spec-reference { display: grid; grid-template-columns: 38px 1fr; gap: 13px; align-items: start; padding: 15px 18px; border: 1px solid #cbd8ec; border-radius: 10px; background: #f6f9ff; color: #526078; }
 .spec-reference > svg { width: 22px; color: #155eef; }
@@ -471,11 +484,12 @@ html, body { background: #f3f6fa; color: #172033; }
 @media (max-width: 760px) {
   .hbm-roadmap header { align-items: flex-start; }
   .hbm-roadmap header h3 { font-size: 15px; }
-  .hbm-roadmap > div { grid-template-columns: repeat(6, 155px); }
+  .hbm-roadmap > div { grid-template-columns: repeat(7, 155px); }
 }
 
 /* HBM lessons begin with a human-readable visual primer before the formal contract. */
-.hbm-lesson-guide { display: grid; gap: 16px; margin-bottom: 8px; }
+.hbm-lesson-guide { display: grid; width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; gap: 16px; margin-bottom: 8px; box-sizing: border-box; }
+.hbm-lesson-guide > * { min-width: 0; max-width: 100%; }
 .plain-goal { padding: 26px; border: 1px solid #b9cef4; border-radius: 14px; background: linear-gradient(135deg, #eaf2ff, #fff 62%); box-shadow: inset 5px 0 #155eef, 0 12px 28px rgba(32, 67, 124, .06); }
 .teaching-eyebrow { display: flex; align-items: center; gap: 8px; color: #155eef; font-size: 14px; font-weight: 700; }
 .teaching-eyebrow svg { width: 19px; }

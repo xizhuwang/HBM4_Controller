@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity, BookOpen, Boxes, Check, CheckCircle2, ChevronRight, Circle, Clock3,
-  Code2, Cpu, ExternalLink, FileCode2, Gauge, GraduationCap, Languages,
+  Code2, Coins, Cpu, ExternalLink, FileCode2, Gauge, GraduationCap, Languages,
   Lightbulb, LoaderCircle, Map, Play, RotateCcw, ScrollText, Search, ShieldAlert,
   TerminalSquare, TestTube2, Trophy, XCircle,
 } from 'lucide-react';
@@ -20,6 +20,20 @@ type AreaResult = { total: number; referenceTotal: number | null; elapsedMs: num
 type ViewMode = 'spec' | 'lab' | 'architecture' | 'review';
 
 const storageKeys = { locale: 'controller-academy:v2:locale', solved: 'controller-academy:v2:solved', code: 'controller-academy:v2:solutions' };
+const sharedKeys = {
+  socEarned: 'academy-shared:v1:soc-earned',
+  hbmEarned: 'academy-shared:v1:hbm-earned',
+  gender: 'soc-rtl-lab:mascot-gender',
+  profession: 'soc-rtl-lab:mascot-profession',
+  equipment: 'soc-rtl-lab:equipment-inventory',
+  element: 'soc-rtl-lab:equipped-element',
+  equipmentSpend: 'soc-rtl-lab:equipment-spend',
+  enhancementSpend: 'soc-rtl-lab:enhancement-spend',
+  consumableSpend: 'soc-rtl-lab:consumable-spend',
+  elementSpend: 'soc-rtl-lab:element-spend',
+  resaleCredits: 'soc-rtl-lab:resale-credits',
+  dailyProgress: 'soc-rtl-lab:daily-progress',
+};
 const storage = {
   get(key: string) { try { return localStorage.getItem(key); } catch { return null; } },
   set(key: string, value: unknown) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* keep session usable */ } },
@@ -27,20 +41,20 @@ const storage = {
 
 const copy = {
   zh: {
-    product: 'Controller RTL Academy', subtitle: 'HBM4 Spec → Architecture → RTL → Verification', search: '搜尋進階題目', curriculum: 'Controller 路徑', all: '全部', progress: '完成進度',
+    product: 'HBM4 Controller & System Academy', subtitle: 'Controller → PHY → RAS → Repair → Package → Performance', search: '搜尋 HBM4 題目', curriculum: '完整 HBM4 路徑', all: '全部', progress: '完成進度',
     spec: '圖解教學與 SPEC', lab: 'RTL 工作台', architecture: '架構總覽', review: 'Design Review', run: '執行 Regression', running: '模擬中…', synth: 'Generic Synthesis', reset: '重設 Starter',
     why: '為什麼一定要做', placement: '它在 Controller 哪裡', boundary: '數位／類比邊界', requirements: '可執行規格', tests: '驗收條件', hints: '分層提示',
     result: 'Regression Console', waiting: '修改 RTL 後執行 regression；編譯、錯誤與波形會留在這裡。', passed: '功能 Regression 通過', failed: '尚未通過',
     evidence: '你必須能提出的證據', questions: '資深工程師應能回答', next: '下一題', source: 'GitHub', local: '程式與進度只存在此瀏覽器；禁止貼公司或 NDA RTL。',
-    scope: '這些是公開、縮小但可執行的數位控制路徑。實際產品參數必須追溯到合法取得的標準、PHY 合約與 speed bin。', ref: '通過後檢視 Reference', hideRef: '返回你的 RTL', empty: '找不到符合條件的題目。', cells: 'generic cells',
+    scope: '這些是公開、縮小但可執行的數位控制與介面合約。封裝／SI 題只做 budget ownership，不取代 PHY、package、SI/PI 或 silicon sign-off；產品參數必須追溯到合法取得的標準、PHY 合約與 speed bin。', ref: '通過後檢視 Reference', hideRef: '返回你的 RTL', empty: '找不到符合條件的題目。', cells: 'generic cells',
   },
   en: {
-    product: 'Controller RTL Academy', subtitle: 'HBM4 Spec → Architecture → RTL → Verification', search: 'Search advanced labs', curriculum: 'Controller paths', all: 'All', progress: 'Progress',
+    product: 'HBM4 Controller & System Academy', subtitle: 'Controller → PHY → RAS → Repair → Package → Performance', search: 'Search HBM4 labs', curriculum: 'Complete HBM4 path', all: 'All', progress: 'Progress',
     spec: 'Visual lesson & spec', lab: 'RTL Workbench', architecture: 'Architecture overview', review: 'Design Review', run: 'Run Regression', running: 'Simulating…', synth: 'Generic Synthesis', reset: 'Reset Starter',
     why: 'Why this block exists', placement: 'Where it sits', boundary: 'Digital / analog boundary', requirements: 'Executable requirements', tests: 'Acceptance tests', hints: 'Layered hints',
     result: 'Regression Console', waiting: 'Edit the RTL and run regression. Compile errors, failures, and waveforms stay here.', passed: 'Functional regression passed', failed: 'Not passed',
     evidence: 'Evidence you must produce', questions: 'Questions an experienced owner must answer', next: 'Next lab', source: 'GitHub', local: 'Code and progress remain in this browser. Never paste company or NDA RTL.',
-    scope: 'These are public, reduced, executable digital control paths. Product parameters must trace to licensed standards, the PHY contract, and the selected speed bin.', ref: 'View Reference after pass', hideRef: 'Back to your RTL', empty: 'No matching lab.', cells: 'generic cells',
+    scope: 'These are public, reduced, executable digital controls and interface contracts. Package/SI labs teach budget ownership and do not replace PHY, package, SI/PI, or silicon signoff. Product parameters must trace to licensed standards, the PHY contract, and the selected speed bin.', ref: 'View Reference after pass', hideRef: 'Back to your RTL', empty: 'No matching lab.', cells: 'generic cells',
   },
 };
 
@@ -52,13 +66,59 @@ function rank(points: number) {
 }
 
 const hbmStages = [
-  { id: 'organization', zh: '先看懂 HBM', en: 'Understand HBM first', labs: ['hbm-pseudo-channel-map', 'hbm-dual-command-gate', 'hbm-bank-state-table'] },
-  { id: 'timing', zh: '核心時序', en: 'Core timing', labs: ['hbm-row-timing-scoreboard', 'hbm-bankgroup-tccd', 'hbm-activate-window', 'hbm-rw-turnaround'] },
-  { id: 'scheduling', zh: '階層排程', en: 'Hierarchical scheduling', labs: ['hbm-hierarchical-arbiter'] },
-  { id: 'maintenance', zh: 'Refresh / RFM / DRFM', en: 'Refresh / RFM / DRFM', labs: ['hbm-refresh-credit', 'hbm-refresh-domain', 'hbm-rfm-counter', 'hbm-drfm-sequencer'] },
-  { id: 'control', zh: '設定、可靠度與電源', en: 'Config, RAS & power', labs: ['hbm-mrs-quiesce', 'hbm-ca-parity', 'hbm-power-state'] },
-  { id: 'integration', zh: '32-Channel 整合', en: '32-channel integration', labs: ['hbm-stack-dispatch', 'hbm-channel-capstone'] },
+  { id: 'organization', zh: '01 組織與位址', en: '01 Organization', labs: ['hbm-pseudo-channel-map', 'hbm-bank-state-table'] },
+  { id: 'command', zh: '02 命令與提交', en: '02 Command commit', labs: ['hbm-dual-command-gate', 'hbm-ca-parity'] },
+  { id: 'timing', zh: '03 完整時序', en: '03 Full timing', labs: ['hbm-row-timing-scoreboard', 'hbm-bankgroup-tccd', 'hbm-activate-window', 'hbm-rw-turnaround'] },
+  { id: 'scheduling', zh: '04 階層排程', en: '04 Scheduling', labs: ['hbm-hierarchical-arbiter'] },
+  { id: 'maintenance', zh: '05 Refresh／RFM', en: '05 Refresh/RFM', labs: ['hbm-refresh-credit', 'hbm-refresh-domain', 'hbm-rfm-counter', 'hbm-drfm-sequencer'] },
+  { id: 'config', zh: '06 設定與電源', en: '06 Config/power', labs: ['hbm-mrs-quiesce', 'hbm-power-state'] },
+  { id: 'integration', zh: '07 Stack 整合', en: '07 Stack integration', labs: ['hbm-stack-dispatch', 'hbm-channel-capstone'] },
+  { id: 'pins', zh: '08 Pin Interface', en: '08 Pin interface', labs: ['hbm-pin-ownership', 'hbm-command-pin-adapter'] },
+  { id: 'phy', zh: '09 DQ／DQS PHY', en: '09 DQ/DQS PHY', labs: ['hbm-write-phy-shim', 'hbm-read-phy-capture'] },
+  { id: 'training', zh: '10 Training', en: '10 Training', labs: ['hbm-training-sweep'] },
+  { id: 'ras', zh: '11 DBI／RAS／ECC', en: '11 DBI/RAS/ECC', labs: ['hbm-dbi-codec', 'hbm-data-parity-ras', 'hbm-ecc-severity'] },
+  { id: 'repair', zh: '12 Repair／DFT', en: '12 Repair/DFT', labs: ['hbm-lane-repair-map', 'hbm-ieee1500-wrapper'] },
+  { id: 'package', zh: '13 封裝與熱', en: '13 Package/thermal', labs: ['hbm-package-budget', 'hbm-thermal-throttle'] },
+  { id: 'performance', zh: '14 效能與 PIM', en: '14 Performance/PIM', labs: ['hbm-bandwidth-window', 'hbm-pim-qos-arbiter'] },
 ];
+
+function readNumber(key: string) {
+  const value = Number(localStorage.getItem(key) ?? '0');
+  return Number.isFinite(value) && value >= 0 ? value : 0;
+}
+
+function parseSolved(raw: string | null) {
+  try {
+    const parsed: unknown = JSON.parse(raw ?? '[]');
+    return Array.isArray(parsed)
+      ? parsed.filter((id): id is string => typeof id === 'string' && challenges.some((item) => item.id === id))
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function readSharedProfile(hbmEarned: number) {
+  let dailyCredits = 0;
+  let equipmentCount = 0;
+  try {
+    const daily = JSON.parse(localStorage.getItem(sharedKeys.dailyProgress) ?? '{}') as { rewardCredits?: unknown };
+    dailyCredits = Math.max(0, Number(daily.rewardCredits) || 0);
+    const equipment = JSON.parse(localStorage.getItem(sharedKeys.equipment) ?? '[]');
+    equipmentCount = Array.isArray(equipment) ? equipment.length : 0;
+  } catch { /* malformed legacy data is ignored, never overwritten */ }
+  const socEarned = readNumber(sharedKeys.socEarned);
+  const spent = readNumber(sharedKeys.equipmentSpend) + readNumber(sharedKeys.enhancementSpend) + readNumber(sharedKeys.consumableSpend) + readNumber(sharedKeys.elementSpend);
+  const wallet = Math.max(0, socEarned + hbmEarned - spent + readNumber(sharedKeys.resaleCredits) + dailyCredits);
+  return {
+    wallet,
+    socEarned,
+    gender: localStorage.getItem(sharedKeys.gender) ?? 'masculine',
+    profession: localStorage.getItem(sharedKeys.profession) ?? 'novice',
+    element: localStorage.getItem(sharedKeys.element) || 'none',
+    equipmentCount,
+  };
+}
 
 export default function Home() {
   const [locale, setLocale] = useState<Locale>('zh');
@@ -76,6 +136,7 @@ export default function Home() {
   const [waveform, setWaveform] = useState('');
   const [area, setArea] = useState<AreaResult | null>(null);
   const [synthesizing, setSynthesizing] = useState(false);
+  const [sharedProfile, setSharedProfile] = useState({ wallet: 0, socEarned: 0, gender: 'masculine', profession: 'novice', element: 'none', equipmentCount: 0 });
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const pendingRun = useRef<string | null>(null);
   const pendingSynth = useRef<string | null>(null);
@@ -100,12 +161,29 @@ export default function Home() {
       const savedSolved = storage.get(storageKeys.solved);
       const savedCode = storage.get(storageKeys.code);
       if (savedLocale) { try { const parsed = JSON.parse(savedLocale); if (parsed === 'zh' || parsed === 'en') setLocale(parsed); } catch { /* ignore */ } }
-      if (savedSolved) { try { const parsed: unknown = JSON.parse(savedSolved); if (Array.isArray(parsed)) setSolved(parsed.filter((id): id is string => typeof id === 'string' && challenges.some((item) => item.id === id))); } catch { /* ignore */ } }
+      const restoredSolved = parseSolved(savedSolved);
+      if (savedSolved) setSolved(restoredSolved);
       if (savedCode) { try { const parsed: unknown = JSON.parse(savedCode); if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) setSolutions(parsed as Record<string, string>); } catch { /* ignore */ } }
       loaded.current = true;
+      const earned = challenges.filter((challenge) => restoredSolved.includes(challenge.id)).reduce((sum, challenge) => sum + challenge.points, 0);
+      localStorage.setItem(sharedKeys.hbmEarned, String(earned));
+      setSharedProfile(readSharedProfile(earned));
     });
     return () => window.cancelAnimationFrame(frame);
   }, []);
+
+  useEffect(() => {
+    if (!loaded.current) return;
+    localStorage.setItem(sharedKeys.hbmEarned, String(points));
+    setSharedProfile(readSharedProfile(points));
+  }, [points]);
+
+  useEffect(() => {
+    const syncProfile = () => setSharedProfile(readSharedProfile(points));
+    window.addEventListener('storage', syncProfile);
+    window.addEventListener('focus', syncProfile);
+    return () => { window.removeEventListener('storage', syncProfile); window.removeEventListener('focus', syncProfile); };
+  }, [points]);
 
   useEffect(() => { if (loaded.current) storage.set(storageKeys.locale, locale); document.documentElement.lang = locale === 'zh' ? 'zh-Hant-TW' : 'en'; }, [locale]);
   useEffect(() => {
@@ -169,12 +247,23 @@ export default function Home() {
           <div className="panel-kicker"><span>{text.curriculum}</span><strong>{challenges.length}</strong></div>
           <nav className="track-list" aria-label={text.curriculum}><button type="button" className={track === 'all' ? 'selected' : ''} onClick={() => setTrack('all')}><Boxes /><span>{text.all}</span><b>{challenges.length}</b></button>{tracks.map((item) => <button key={item.id} type="button" className={track === item.id ? 'selected' : ''} onClick={() => setTrack(item.id)}><span className={`track-dot ${item.id}`} /><span>{localize(item.label, locale)}</span><b>{challenges.filter((challenge) => challenge.track === item.id).length}</b></button>)}</nav>
           <div className="lesson-list">{filtered.length ? filtered.map((item) => <button key={item.id} type="button" className={current.id === item.id ? 'current' : ''} onClick={() => selectChallenge(item.id)}>{solved.includes(item.id) ? <CheckCircle2 /> : <Circle />}<span><strong>{String(item.order).padStart(2, '0')} · {localize(item.title, locale)}</strong><small>{item.id}</small></span></button>) : <p className="empty-list">{text.empty}</p>}</div>
+          <section className="shared-profile-card" aria-label={locale === 'zh' ? '跨 Academy 共用進度' : 'Shared academy progress'}>
+            <div><Coins /><span>{locale === 'zh' ? '共用冒險進度' : 'Shared adventure profile'}</span><strong>{sharedProfile.wallet}</strong></div>
+            <p>{locale === 'zh' ? 'SoC 與 HBM4 共用金幣、角色、職業、屬性與背包；兩邊的解題清單仍各自保存。' : 'SoC and HBM4 share coins, character, profession, element, and inventory while keeping solved lists separate.'}</p>
+            <dl>
+              <div><dt>{locale === 'zh' ? '角色' : 'Character'}</dt><dd>{sharedProfile.gender === 'feminine' ? (locale === 'zh' ? '女企鵝' : 'Female penguin') : (locale === 'zh' ? '男企鵝' : 'Male penguin')}</dd></div>
+              <div><dt>{locale === 'zh' ? '職業' : 'Class'}</dt><dd>{sharedProfile.profession}</dd></div>
+              <div><dt>{locale === 'zh' ? '屬性' : 'Element'}</dt><dd>{sharedProfile.element}</dd></div>
+              <div><dt>{locale === 'zh' ? '裝備' : 'Gear'}</dt><dd>{sharedProfile.equipmentCount}</dd></div>
+            </dl>
+            <a href="https://xizhuwang.github.io/rtl-interview-lab/">{locale === 'zh' ? '回 SoC RTL Academy 管理背包' : 'Manage inventory in SoC RTL Academy'}<ChevronRight /></a>
+          </section>
           <div className="progress-block"><div><span>{text.progress}</span><b>{solved.length}/{challenges.length}</b></div><div className="progress-track"><i style={{ width: `${(solved.length / challenges.length) * 100}%` }} /></div><p><Trophy />{rank(points)}<strong>{points} pts</strong></p></div>
         </aside>
 
         <section className="workbench">
           <div className="lesson-heading"><div><div className="lesson-meta"><span>{current.track.toUpperCase()}</span><span>{localize(difficultyLabel[current.difficulty], locale)}</span><span><Clock3 />{current.minutes} min</span><span>+{current.points} pts</span></div><h2>{localize(current.title, locale)}</h2><p>{localize(current.description, locale)}</p></div><button type="button" className="next-button" onClick={() => selectChallenge(nextChallenge.id)}>{text.next}<ChevronRight /></button></div>
-          {current.track === 'hbm' && <section className="hbm-roadmap"><header><div><span>JESD270-4A LEARNING PATH</span><h3>{locale === 'zh' ? '從 HBM4 規格一路組成可驗證 Controller' : 'Build a verifiable controller from the HBM4 specification'}</h3></div><strong>{challenges.filter((item) => item.track === 'hbm').length} LABS</strong></header><div>{hbmStages.map((stage, index) => { const completed = stage.labs.filter((id) => solved.includes(id)).length; const active = stage.labs.includes(current.id); return <button key={stage.id} type="button" data-active={active} onClick={() => selectChallenge(stage.labs[0])}><i>{String(index + 1).padStart(2, '0')}</i><span><b>{locale === 'zh' ? stage.zh : stage.en}</b><small>{completed}/{stage.labs.length}</small></span></button>; })}</div></section>}
+          {current.track === 'hbm' && <section className="hbm-roadmap"><header><div><span>COMPLETE HBM4 LEARNING PATH</span><h3>{locale === 'zh' ? '14 模組：Controller、PHY 介面、RAS、修復、封裝與系統效能' : '14 modules: controller, PHY interface, RAS, repair, package, and system performance'}</h3></div><strong>{challenges.filter((item) => item.track === 'hbm').length} LABS</strong></header><div>{hbmStages.map((stage, index) => { const completed = stage.labs.filter((id) => solved.includes(id)).length; const active = stage.labs.includes(current.id); return <button key={stage.id} type="button" data-active={active} onClick={() => selectChallenge(stage.labs[0])}><i>{String(index + 1).padStart(2, '0')}</i><span><b>{locale === 'zh' ? stage.zh : stage.en}</b><small>{completed}/{stage.labs.length}</small></span></button>; })}</div></section>}
           <div className="view-tabs" role="tablist" aria-label="Lesson view"><button type="button" role="tab" aria-selected={view === 'spec'} onClick={() => setView('spec')}><ScrollText />{text.spec}</button><button type="button" role="tab" aria-selected={view === 'lab'} onClick={() => setView('lab')}><Code2 />{text.lab}</button><button type="button" role="tab" aria-selected={view === 'architecture'} onClick={() => setView('architecture')}><Map />{text.architecture}</button><button type="button" role="tab" aria-selected={view === 'review'} onClick={() => setView('review')}><GraduationCap />{text.review}</button></div>
 
           {view === 'spec' && <LabSpecSheet challenge={current} locale={locale} onStart={() => setView('lab')} />}

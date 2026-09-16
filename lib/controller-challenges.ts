@@ -1,5 +1,6 @@
 import type { Challenge } from './challenges';
 import { hbm4AdvancedChallenges } from './hbm4-advanced-challenges';
+import { hbm4SystemChallenges } from './hbm4-system-challenges';
 
 const pass = `
 task check;
@@ -431,6 +432,6 @@ initial begin repeat(2)@(posedge clk);rst_n=1;at=2;a=1;@(posedge clk);#1;a=0;che
 
 const trackOrder: Record<Challenge['track'], number> = { dram: 0, hbm: 1, lpddr: 2, gddr: 3, pcie: 4 };
 
-export const controllerChallenges: Challenge[] = [...baseControllerChallenges, ...hbm4AdvancedChallenges]
+export const controllerChallenges: Challenge[] = [...baseControllerChallenges, ...hbm4AdvancedChallenges, ...hbm4SystemChallenges]
   .sort((a, b) => trackOrder[a.track] - trackOrder[b.track] || a.order - b.order)
   .map((challenge, index) => ({ ...challenge, order: index + 1 }));

@@ -1,6 +1,6 @@
 # Advanced controller RTL curriculum
 
-This is the second-stage course after `rtl-interview-lab`. It intentionally does not repeat generic counters, FIFOs, CDC synchronizers, AXI register slices, introductory verification, or other foundation exercises. The 42 labs turn those prerequisites into memory and PCIe controller mechanisms.
+This is the second-stage course after `rtl-interview-lab`. It intentionally does not repeat generic counters, FIFOs, CDC synchronizers, AXI register slices, introductory verification, or other foundation exercises. The 56 labs turn those prerequisites into memory, HBM4 system-interface, and PCIe controller mechanisms.
 
 ## How to complete a lab
 
@@ -28,7 +28,7 @@ Exit evidence:
 - define refresh deadline, starvation, row-hit, and bus-direction priorities;
 - show how one-bank logic replicates and how global shared constraints are added.
 
-## Stage 2 — HBM4 hierarchy and command legality (labs 9–25)
+## Stage 2 — HBM4 controller core (17 labs)
 
 Build the path:
 
@@ -45,7 +45,7 @@ The seventeen HBM labs are organized as six review gates:
 
 Each lab includes a topic-level trace to JESD270-4A. Numeric windows are intentionally reduced for executable learning; an implementation must load the applicable speed-bin, mode-register, PHY, package, and system values rather than treating the teaching constants as product parameters.
 
-Before the formal micro-spec, every HBM lesson follows the same human-readable sequence: plain-language objective and analogy, prerequisite glossary, location in the full controller, internal circuit flow, expected waveform, and three incremental coding steps. Lab 9 begins with an interactive address decoder and requires no prior timing knowledge.
+Before the formal micro-spec, the controller-core lessons follow the same human-readable sequence: plain-language objective and analogy, prerequisite glossary, location in the full controller, internal circuit flow, expected waveform, and incremental coding steps. Lab 9 begins with an interactive address decoder and requires no prior timing knowledge.
 
 Exit evidence:
 
@@ -54,6 +54,29 @@ Exit evidence:
 - prove one-hot issue and no issue from a timing- or refresh-blocked domain;
 - propose pipeline cuts and explain how priority snapshots survive them;
 - distinguish HBM controller RTL from PHY, microbump, interposer, SI/PI, and thermal work.
+
+## Stage 2B — Complete HBM4 system path (14 additional labs)
+
+The controller core is necessary but not a complete HBM4 learning claim. The additional executable labs cover the controller-visible contracts around it:
+
+1. **Pin ownership:** row/column command pins, read/write DQ direction, and test-mode isolation.
+2. **Command pin adapter:** separate R/C payloads and APAR at the digital PHY boundary.
+3. **Write PHY shim:** payload ownership, DQ output enable, and WDQS launch window.
+4. **Read PHY capture:** aligned DQ beats returned by an abstract RDQS sample event.
+5. **Training/calibration:** tap sweep, pass/fail collection, selection, and failure telemetry.
+6. **DBI:** independent per-byte encode/decode with a round-trip invariant.
+7. **DPAR/DERR:** external data-bus protection kept separate from on-die ECC.
+8. **ECC/SEV:** NE/CEs/CEm/UE classification and sticky UE reporting.
+9. **Lane repair:** logical-to-physical remap with a spare lane and explicit ownership.
+10. **IEEE 1500:** capture/shift/update isolation for wrapper test access.
+11. **Package budget:** saturating timing-budget arithmetic fed by real package/SI results.
+12. **Thermal policy:** scheduler issue budgets derived from synchronized thermal states.
+13. **Performance counters:** measured beats/cycles for peak-versus-actual throughput analysis.
+14. **PIM QoS:** host/PIM fairness under refresh maintenance priority.
+
+These labs intentionally stop at digital contracts. They do not claim to implement analog delay lines, serializers, I/O cells, microbumps, interposer routing, EM/SI/PI, thermal physics, or silicon compliance. Those require the actual PHY, package models, licensed product parameters, and sign-off tools.
+
+Shared game state uses path-independent localStorage on the common `https://xizhuwang.github.io` origin. Character, class, element, inventory, and wallet carry between this site and `rtl-interview-lab`; solved IDs and code drafts remain academy-specific so the two curricula cannot overwrite one another.
 
 ## Stage 3 — LPDDR control plane (labs 26–29)
 

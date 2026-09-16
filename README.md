@@ -4,7 +4,7 @@
 
 ## 繁體中文
 
-這是一套可直接在瀏覽器撰寫、編譯與模擬的進階 Controller RTL 互動式課程，共 42 題。基礎 RTL 題保留在獨立的 `rtl-interview-lab`；本專案不重複那些題目，只聚焦 DRAM／HBM／LPDDR／GDDR／PCIe 的專用電路、子系統整合與 controller capstone。
+這是一套可直接在瀏覽器撰寫、編譯與模擬的進階 Controller RTL 互動式課程，共 56 題。基礎 RTL 題保留在獨立的 `rtl-interview-lab`；本專案不重複那些題目，只聚焦 DRAM／HBM／LPDDR／GDDR／PCIe 的專用電路、子系統整合與 controller capstone。
 
 它的目標不是用「做完題目」取代工作年資，而是把面試與實務會要求的能力變成可重現證據：規格拆解、cycle-accurate RTL、protocol/timing guard、self-checking testbench、波形除錯、合成比較，以及 sign-off 邊界判斷。
 
@@ -15,7 +15,7 @@
 | 路徑 | 主題 | 代表題目 |
 |---|---|---|
 | DRAM（8 題） | mapping、bank FSM、timing wheel、FR-FCFS、refresh、write drain、command generator | legality 與 policy 分層，組成單 bank issue path |
-| HBM（17 題） | 2-slot command、bank state、row/column timing、tFAW、turnaround、REF/RFM/DRFM、MRS、CA parity、power state、stack dispatch、channel capstone | 由 1 個 bank/PC/channel 擴展到 32 channel、64 PC、1024 bank，保留可合成的階層結構 |
+| HBM（31 題／14 模組） | Controller、完整 pin ownership、DQ/DQS PHY shim、training、DBI、DPAR/DERR、ECC/SEV、lane repair、IEEE 1500、package budget、thermal、throughput 與 PIM QoS | 由 1 個 bank/PC/channel 擴展到 32 channel、64 PC、1024 bank，再延伸到 PHY/RAS/repair/package/system contract |
 | LPDDR（4 題） | 低功耗序列、初始化/training handshake、DVFS quiesce、controller gate | traffic drain、power/isolation 與 PHY status 的安全順序 |
 | GDDR（4 題） | bus turnaround、command parity、CRC retry ownership、issue capstone | 高速共享資料匯流排與可靠度責任 |
 | PCIe（9 題） | TLP route、credits、tags、replay、completion reorder、LTSSM、admission capstone | Transaction/Data Link/MAC 分層與資源原子配置 |
@@ -26,12 +26,12 @@
 
 - 每題先提供完整 micro-spec：功能邊界、全部 port 的方向／位寬／語意、clock/reset、ordered behavior、同拍 priority、逐拍範例與假設。
 - 每個 HBM 題目另外顯示 JESD270-4A 條款追溯、在完整 controller 的電路位置，以及教學縮小值與產品參數的邊界；文字為重述，不重製標準表格。
-- 17 個 HBM 題目都先用白話目標、生活比喻與名詞卡建立心智模型，再提供 controller 架構圖、題內電路方塊圖、預期邏輯波形與三步 coding recipe；第一題另有可操作的 20-bit 位址解碼器。
+- 既有 17 個 HBM Controller 題目先用白話目標、生活比喻與名詞卡建立心智模型；新增 14 題則補齊 PHY interface、RAS、repair、package 與 system performance 的可執行合約。
 - 繁體中文／英文題目、規格、提示與職務對應。
 - 瀏覽器內 Icarus Verilog 編譯與 self-checking simulation。
 - 每題都產生 VCD，可下載後用 GTKWave 等工具做 cycle-by-cycle 除錯。
 - 瀏覽器內 Yosys generic-cell 統計，用同一工具版本比較 RTL 相對複雜度。
-- localStorage 保存程式、分數與完成進度；沒有上傳程式碼的後端。
+- localStorage 保存程式、分數與完成進度；同一個 `xizhuwang.github.io` origin 會與 `rtl-interview-lab` 共用角色、職業、屬性、背包與金幣，但兩套題庫的解題紀錄／程式碼各自保存，沒有上傳程式碼的後端。
 - GitHub Pages 自動執行完整 regression、production build 與 release audit 後才部署。
 
 ### 本機開發
@@ -65,7 +65,7 @@ pnpm dev
 
 ## English
 
-Memory Controller RTL Lab is a browser-based advanced course for writing, compiling, simulating, debugging, and reviewing controller RTL. Its 42 labs are distinct from the foundation exercises in `rtl-interview-lab` and cover DRAM, HBM, LPDDR, GDDR, and PCIe from focused blocks through controller capstones. Seventeen HBM4 labs trace their teaching contracts to JESD270-4A topics without reproducing the standard's normative tables.
+Memory Controller RTL Lab is a browser-based advanced course for writing, compiling, simulating, debugging, and reviewing controller RTL. Its 56 labs are distinct from the foundation exercises in `rtl-interview-lab` and cover DRAM, HBM, LPDDR, GDDR, and PCIe from focused blocks through controller capstones. The 31-lab HBM4 path is organized as 14 modules covering controller, PHY interface, reliability, repair, package contracts, and system performance without reproducing normative standard tables.
 
 The course produces reproducible evidence of specification decomposition, cycle-accurate RTL, protocol and timing guards, self-checking verification, waveform debugging, and synthesis reasoning. It does not claim that completing a challenge set substitutes for senior-level project ownership.
 

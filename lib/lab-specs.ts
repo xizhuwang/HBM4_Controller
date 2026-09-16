@@ -1,5 +1,6 @@
 import type { Localized } from './challenges';
 import { hbm4AdvancedReferences, hbm4AdvancedSpecs, type LabReference } from './hbm4-advanced-specs';
+import { hbm4SystemReferences, hbm4SystemSpecs } from './hbm4-system-specs';
 
 export type PortInfo = { name: string; direction: string; width: string };
 export type TimingExample = { cycle: string; drive: Localized; expect: Localized };
@@ -23,6 +24,7 @@ const resetPorts = { clk: b('模組時脈；只在上升緣提交狀態。', 'Mo
 
 export const labSpecs: Record<string, LabSpec> = {
   ...hbm4AdvancedSpecs,
+  ...hbm4SystemSpecs,
   'dram-address-map': spec(
     b('建立 controller 的第一級位址解碼器，把 16-bit 線性 request address 唯一切成 column、bank、channel、row。輸出只描述目的地，不儲存資料也不發 DRAM command。', 'Build the controller’s first address decoder, uniquely slicing a 16-bit request address into column, bank, channel, and row. It selects a destination; it neither stores data nor issues a DRAM command.'),
     combinational,
@@ -287,6 +289,7 @@ const hbmReference = (clause: string, topicsZh: string, topicsEn: string): LabRe
 
 export const labReferences: Record<string, LabReference> = {
   ...hbm4AdvancedReferences,
+  ...hbm4SystemReferences,
   'hbm-pseudo-channel-map': hbmReference('§3.1–3.2', 'Channel、pseudo-channel、addressing 與 bank-group organization', 'Channel, pseudo-channel, addressing, and bank-group organization'),
   'hbm-bankgroup-tccd': hbmReference('§3.2.1、§6.3.3、§10', 'Bank-group 對 tCCD_S/L/R 的影響', 'Bank-group effects on tCCD_S/L/R'),
   'hbm-hierarchical-arbiter': hbmReference('§3.1–3.2', '從 channel/PC/bank 組織推導的 controller hierarchy', 'Controller hierarchy derived from channel/PC/bank organization'),
