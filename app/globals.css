@@ -591,3 +591,74 @@ html, body { background: #f3f6fa; color: #172033; }
   .address-ribbon { min-width: 680px; }
   .circuit-flow { padding-bottom: 12px; }
 }
+
+/* Load the heavy editor only when it is needed and keep the placeholder stable. */
+.editor-loading, .waveform-loading { display: grid; place-items: center; min-height: 180px; color: #64748b; background: #0c1524; font: 13px var(--font-geist-mono); }
+.editor-loading { grid-auto-flow: column; gap: 9px; min-height: 560px; }
+.editor-loading svg { width: 18px; }
+.waveform-loading { min-height: 120px; margin-top: 14px; border-radius: 10px; }
+
+/* Lightweight, event-driven battle feedback. Nothing here animates while the page is idle. */
+.hbm-battle-feedback {
+  --battle-accent: #5b7cfa;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(185px, .72fr) minmax(300px, 1.28fr);
+  align-items: center;
+  min-height: 174px;
+  margin-top: 14px;
+  overflow: hidden;
+  border: 1px solid #ced9eb;
+  border-radius: 13px;
+  background: radial-gradient(circle at 77% 42%, color-mix(in srgb, var(--battle-accent) 15%, transparent), transparent 34%), linear-gradient(135deg, #f7faff, #edf3ff);
+  box-shadow: 0 8px 22px rgba(35, 61, 105, .06);
+}
+.hbm-battle-feedback.element-fire { --battle-accent: #f05b38; }
+.hbm-battle-feedback.element-water { --battle-accent: #277fe7; }
+.hbm-battle-feedback.element-wind { --battle-accent: #1ba982; }
+.hbm-battle-feedback.element-earth { --battle-accent: #a16a36; }
+.hbm-battle-feedback.element-four-roots { --battle-accent: #8555e8; }
+.hbm-battle-copy { z-index: 2; padding: 22px 12px 22px 24px; }
+.hbm-battle-copy > span { display: block; color: #155eef; font: 700 10px var(--font-geist-mono); letter-spacing: .11em; }
+.hbm-battle-copy > strong { display: block; max-width: 270px; margin-top: 8px; color: #20304c; font-size: 16px; line-height: 1.48; }
+.hbm-battle-copy > small { display: inline-block; margin-top: 10px; padding: 5px 8px; border-radius: 99px; background: #fff0b7; color: #785100; font-weight: 800; }
+.hbm-battle-stage { position: relative; align-self: stretch; min-height: 172px; }
+.hbm-battle-actor, .hbm-battle-target { position: absolute; bottom: 7px; display: grid; place-items: end center; }
+.hbm-battle-actor { z-index: 3; left: 3%; width: 43%; height: 158px; }
+.hbm-battle-target { z-index: 2; right: 4%; width: 35%; height: 146px; }
+.hbm-battle-actor img, .hbm-battle-target img { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 9px 8px rgba(32, 51, 84, .2)); }
+.hbm-battle-target small { position: absolute; right: 0; bottom: 1px; left: 0; padding: 3px 6px; border-radius: 99px; background: rgba(28, 38, 59, .82); color: #fff; font: 8px var(--font-geist-mono); text-align: center; }
+.hbm-element-aura { position: absolute; z-index: -1; inset: 27% 13% 5%; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--battle-accent) 30%, transparent), transparent 68%); }
+.hbm-attack-trail { position: absolute; z-index: 5; top: 47%; left: 42%; color: var(--battle-accent); font: 900 44px/1 sans-serif; opacity: 0; text-shadow: 0 0 13px color-mix(in srgb, var(--battle-accent) 75%, white); }
+.hbm-hit-flash { position: absolute; z-index: 4; top: 31%; left: 35%; width: 52px; height: 52px; border: 5px solid var(--battle-accent); border-radius: 50%; opacity: 0; }
+.hbm-battle-verdict { position: absolute; z-index: 8; top: 16px; right: 20px; color: #07865c; font: 900 22px var(--font-geist-mono); letter-spacing: .06em; opacity: 0; transform: rotate(-7deg) scale(.75); }
+
+.hbm-battle-feedback[data-state='running'] .hbm-battle-actor { animation: hbm-actor-strike .72s ease-in-out 2; }
+.hbm-battle-feedback[data-state='running'] .hbm-attack-trail { animation: hbm-projectile .72s ease-out 2; }
+.hbm-battle-feedback[data-state='running'] .hbm-hit-flash { animation: hbm-hit .72s ease-out 2; }
+.hbm-battle-feedback[data-state='success'] .hbm-battle-actor { animation: hbm-victory .72s ease-out 1; }
+.hbm-battle-feedback[data-state='success'] .hbm-battle-target { animation: hbm-target-break .72s ease-out 1 both; }
+.hbm-battle-feedback[data-state='success'] .hbm-hit-flash { animation: hbm-hit .72s ease-out 1; }
+.hbm-battle-feedback[data-state='success'] .hbm-battle-verdict { animation: hbm-verdict .45s .15s ease-out 1 both; }
+.hbm-battle-feedback[data-state='failure'] .hbm-battle-actor { animation: hbm-actor-hurt .48s ease-out 2; }
+.hbm-battle-feedback[data-state='failure'] .hbm-battle-target { animation: hbm-target-counter .62s ease-out 1; }
+.hbm-battle-feedback[data-state='failure'] .hbm-battle-verdict { color: #c2413c; animation: hbm-verdict .45s .15s ease-out 1 both; }
+
+@keyframes hbm-actor-strike { 0%,100% { transform: translateX(0); } 42% { transform: translateX(18%); } }
+@keyframes hbm-projectile { 0% { opacity: 0; transform: translate(-20px, 8px) scale(.55); } 28% { opacity: 1; } 78% { opacity: 1; transform: translate(90px, -7px) scale(1.25); } 100% { opacity: 0; transform: translate(112px, -7px) scale(.8); } }
+@keyframes hbm-hit { 0%,60% { opacity: 0; transform: scale(.25); } 75% { opacity: .95; transform: scale(1.15); } 100% { opacity: 0; transform: scale(1.7); } }
+@keyframes hbm-victory { 0% { transform: translateY(0); } 45% { transform: translateY(-13px) rotate(-3deg); } 100% { transform: translateY(0); } }
+@keyframes hbm-target-break { 0% { transform: translate(0) rotate(0); opacity: 1; } 35% { transform: translate(8px, -2px) rotate(5deg); } 72% { transform: translate(-8px, 2px) rotate(-6deg); opacity: .7; } 100% { transform: translateY(12px) rotate(8deg); opacity: .35; } }
+@keyframes hbm-target-counter { 0%,100% { transform: translateX(0); } 45% { transform: translateX(-12%); filter: drop-shadow(0 0 14px #d7504a); } }
+@keyframes hbm-actor-hurt { 0%,100% { transform: translateX(0); filter: none; } 45% { transform: translateX(-11px) rotate(-3deg); filter: sepia(.8) saturate(2); } }
+@keyframes hbm-verdict { to { opacity: 1; transform: rotate(-7deg) scale(1); } }
+
+@media (max-width: 760px) {
+  .hbm-battle-feedback { grid-template-columns: 1fr; min-height: 260px; }
+  .hbm-battle-copy { padding: 16px 18px 0; }
+  .hbm-battle-stage { min-height: 190px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hbm-battle-feedback *, .hbm-battle-feedback *::before, .hbm-battle-feedback *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}

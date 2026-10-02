@@ -1,7 +1,7 @@
 'use client';
 /* eslint-disable next/no-img-element -- Shared mascot art is hosted by the sibling static Academy and selected dynamically from shared progress. */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity, BookOpen, Boxes, Check, CheckCircle2, ChevronRight, Circle, Clock3,
   Code2, Coins, Cpu, ExternalLink, FileCode2, Gauge, GraduationCap, Languages,
@@ -10,11 +10,13 @@ import {
 } from 'lucide-react';
 
 import { ArchitectureDiagram } from '@/components/architecture-diagram';
+import { HbmBattleFeedback, type BattleState } from '@/components/hbm-battle-feedback';
 import { LabSpecSheet } from '@/components/lab-spec-sheet';
-import { RtlEditor } from '@/components/rtl-editor';
-import { WaveformViewer } from '@/components/waveform-viewer';
 import { labContext } from '@/lib/architectures';
 import { challenges, difficultyLabel, localize, tracks, type Locale, type TrackId } from '@/lib/challenges';
+
+const RtlEditor = lazy(() => import('@/components/rtl-editor').then((module) => ({ default: module.RtlEditor })));
+const WaveformViewer = lazy(() => import('@/components/waveform-viewer').then((module) => ({ default: module.WaveformViewer })));
 
 type Result = { ok: boolean; phase: string; console: string; elapsedMs?: number };
 type AreaResult = { total: number; referenceTotal: number | null; elapsedMs: number };
@@ -173,9 +175,11 @@ function readSharedProfile(hbmEarned: number) {
   } satisfies SharedProfile;
 }
 
-function mascotImage(profile: SharedProfile) {
-  const profession = profile.gender === 'masculine' && profile.profession === 'soc' ? 'soc-v2' : profile.profession;
-  return `https://xizhuwang.github.io/rtl-interview-lab/mascot/penguin-${profile.gender}-${profession}.png`;
+function mascotImage(profile: SharedProfile, pose: 'idle' | 'attack' = 'idle') {
+  if (profile.profession === 'novice') {
+    return `https://xizhuwang.github.io/rtl-interview-lab/mascot/penguin-${profile.gender}-novice.png`;
+  }
+  return `https://xizhuwang.github.io/rtl-interview-lab/mascot/profession-${profile.profession}-${profile.gender}-${pose}-base-v5.webp`;
 }
 
 export default function Home() {
@@ -188,7 +192,10 @@ export default function Home() {
   const [solved, setSolved] = useState<string[]>([]);
   const [result, setResult] = useState<Result | null>(null);
   const [running, setRunning] = useState(false);
+  const [engineRequested, setEngineRequested] = useState(false);
   const [engineReady, setEngineReady] = useState(false);
+  const [battleState, setBattleState] = useState<BattleState>('idle');
+  const [battleReward, setBattleReward] = useState(0);
   const [hintCount, setHintCount] = useState(0);
   const [showReference, setShowReference] = useState(false);
   const [waveform, setWaveform] = useState('');
@@ -247,10 +254,24 @@ export default function Home() {
 
   useEffect(() => { if (loaded.current) storage.set(storageKeys.locale, locale); document.documentElement.lang = locale === 'zh' ? 'zh-Hant-TW' : 'en'; }, [locale]);
   useEffect(() => {
-    if (engineReady) return;
-    const timer = window.setInterval(() => iframeRef.current?.contentWindow?.postMessage({ type: 'SOC_RTL_ENGINE_PING' }, window.location.origin), 700);
+    if (!engineRequested || engineReady) return;
+    const ping = () => iframeRef.current?.contentWindow?.postMessage({ type: 'SOC_RTL_ENGINE_PING' }, window.location.origin);
+    ping();
+    const timer = window.setInterval(ping, 1600);
     return () => window.clearInterval(timer);
-  }, [engineReady]);
+  }, [engineReady, engineRequested]);
+
+  useEffect(() => {
+    if (!loaded.current) return;
+    const timer = window.setTimeout(() => storage.set(storageKeys.code, solutions), 400);
+    return () => window.clearTimeout(timer);
+  }, [solutions]);
+
+  useEffect(() => {
+    if (battleState !== 'success' && battleState !== 'failure') return;
+    const timer = window.setTimeout(() => { setBattleState('idle'); setBattleReward(0); }, 1800);
+    return () => window.clearTimeout(timer);
+  }, [battleState]);
 
   const markSolved = useCallback((id: string) => {
     setSolved((previous) => { if (previous.includes(id)) return previous; const next = [...previous, id]; storage.set(storageKeys.solved, next); return next; });
@@ -263,7 +284,8 @@ export default function Home() {
       if (event.data?.type === 'SOC_RTL_RESULT' && event.data.requestId === pendingRun.current) {
         pendingRun.current = null; setRunning(false);
         const next = { ok: Boolean(event.data.ok), phase: String(event.data.phase), console: String(event.data.console ?? ''), elapsedMs: Number(event.data.elapsedMs ?? 0) };
-        setResult(next); setWaveform(String(event.data.vcd ?? '')); if (next.ok) markSolved(current.id);
+        const firstClear = next.ok && !solved.includes(current.id);
+        setResult(next); setWaveform(String(event.data.vcd ?? '')); setBattleState(next.ok ? 'success' : 'failure'); setBattleReward(firstClear ? current.points : 0); if (next.ok) markSolved(current.id);
       }
       if (event.data?.type === 'SOC_RTL_SYNTH_RESULT' && event.data.requestId === pendingSynth.current) {
         pendingSynth.current = null; setSynthesizing(false);
@@ -272,19 +294,20 @@ export default function Home() {
       }
     };
     window.addEventListener('message', handler); return () => window.removeEventListener('message', handler);
-  }, [current.id, markSolved]);
+  }, [current.id, current.points, markSolved, solved]);
 
   const selectChallenge = (id: string) => {
-    setSelectedId(id); setResult(null); setWaveform(''); setArea(null); setHintCount(0); setShowReference(false); setView('spec');
+    setSelectedId(id); setResult(null); setWaveform(''); setArea(null); setHintCount(0); setShowReference(false); setBattleState('idle'); setView('spec');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const updateCode = (value: string) => {
-    setSolutions((previous) => { const next = { ...previous, [current.id]: value }; storage.set(storageKeys.code, next); return next; });
+    setSolutions((previous) => ({ ...previous, [current.id]: value }));
     setResult(null); setWaveform(''); setArea(null); setShowReference(false);
   };
+  const openLab = () => { setEngineRequested(true); setView('lab'); };
   const run = () => {
     if (!engineReady || !current.testbench || !iframeRef.current?.contentWindow) return;
-    const requestId = `run-${Date.now()}`; pendingRun.current = requestId; setRunning(true); setResult(null); setWaveform('');
+    const requestId = `run-${Date.now()}`; pendingRun.current = requestId; setRunning(true); setBattleState('running'); setBattleReward(0); setResult(null); setWaveform('');
     iframeRef.current.contentWindow.postMessage({ type: 'SOC_RTL_RUN', requestId, design: code, testbench: current.testbench, generation: '2005' }, window.location.origin);
   };
   const synthesize = () => {
@@ -307,10 +330,10 @@ export default function Home() {
 
   return (
     <main className="academy-shell">
-      <iframe ref={iframeRef} src="./engine/runner.html" title="Browser Verilog engine" className="engine-frame" sandbox="allow-scripts allow-same-origin" />
+      {engineRequested && <iframe ref={iframeRef} src="./engine/runner.html" title="Browser Verilog engine" className="engine-frame" sandbox="allow-scripts allow-same-origin" />}
       <header className="academy-header">
         <div className="brand-lockup"><span className="brand-mark"><Cpu /></span><div><h1>{text.product}</h1><p>{text.subtitle}</p></div></div>
-        <div className="header-actions"><span className={`engine-status ${engineReady ? 'ready' : ''}`}><i />{engineReady ? 'Icarus ready' : 'Loading engine'}</span><a className="header-link" href="https://github.com/xizhuwang/HBM4_Controller" target="_blank" rel="noreferrer">{text.source}<ExternalLink /></a><button className="language-button" type="button" onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}><Languages />{locale === 'zh' ? 'EN' : '繁中'}</button></div>
+        <div className="header-actions"><span className={`engine-status ${engineReady ? 'ready' : ''}`}><i />{engineReady ? 'Icarus ready' : engineRequested ? 'Loading engine' : (locale === 'zh' ? 'RTL 引擎按需載入' : 'RTL engine on demand')}</span><a className="header-link" href="https://github.com/xizhuwang/HBM4_Controller" target="_blank" rel="noreferrer">{text.source}<ExternalLink /></a><button className="language-button" type="button" onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}><Languages />{locale === 'zh' ? 'EN' : '繁中'}</button></div>
       </header>
 
       <div className="academy-layout">
@@ -331,11 +354,11 @@ export default function Home() {
 
         <section className="workbench">
           <div className="lesson-heading"><div><div className="lesson-meta"><span>{current.track.toUpperCase()}</span><span>{localize(difficultyLabel[current.difficulty], locale)}</span><span><Clock3 />{current.minutes} min</span><span>+{current.points} pts</span></div><h2>{localize(current.title, locale)}</h2><p>{localize(current.description, locale)}</p></div><button type="button" className="next-button" onClick={() => selectChallenge(nextChallenge.id)}>{text.next}<ChevronRight /></button></div>
-          <div className="view-tabs" role="tablist" aria-label="Lesson view"><button type="button" role="tab" aria-selected={view === 'spec'} onClick={() => setView('spec')}><ScrollText />{text.spec}</button><button type="button" role="tab" aria-selected={view === 'lab'} onClick={() => setView('lab')}><Code2 />{text.lab}</button><button type="button" role="tab" aria-selected={view === 'architecture'} onClick={() => setView('architecture')}><Map />{text.architecture}</button><button type="button" role="tab" aria-selected={view === 'review'} onClick={() => setView('review')}><GraduationCap />{text.review}</button></div>
+          <div className="view-tabs" role="tablist" aria-label="Lesson view"><button type="button" role="tab" aria-selected={view === 'spec'} onClick={() => setView('spec')}><ScrollText />{text.spec}</button><button type="button" role="tab" aria-selected={view === 'lab'} onClick={openLab}><Code2 />{text.lab}</button><button type="button" role="tab" aria-selected={view === 'architecture'} onClick={() => setView('architecture')}><Map />{text.architecture}</button><button type="button" role="tab" aria-selected={view === 'review'} onClick={() => setView('review')}><GraduationCap />{text.review}</button></div>
 
-          {view === 'spec' && <LabSpecSheet challenge={current} locale={locale} onStart={() => setView('lab')} />}
+          {view === 'spec' && <LabSpecSheet challenge={current} locale={locale} onStart={openLab} />}
 
-          {view === 'lab' && <><ArchitectureDiagram track={current.track} activeBlock={context.blockId} locale={locale} compact /><section className="editor-card"><div className="editor-titlebar"><div><FileCode2 /><span>rtl/{current.id}.v</span><em>Verilog-2005</em></div><div><button type="button" onClick={() => updateCode(current.starter)}><RotateCcw />{text.reset}</button>{solved.includes(current.id) && current.referenceSolution && <button type="button" onClick={() => setShowReference((value) => !value)}><BookOpen />{showReference ? text.hideRef : text.ref}</button>}</div></div><RtlEditor value={showReference ? current.referenceSolution ?? code : code} onChange={showReference ? () => undefined : updateCode} readOnly={showReference} /><div className="editor-toolbar"><p><ShieldAlert />{text.local}</p><div><button type="button" className="synth-button" disabled={!engineReady || synthesizing} onClick={synthesize}>{synthesizing ? <LoaderCircle className="spin" /> : <Gauge />}{text.synth}</button><button type="button" className="run-button" disabled={!engineReady || running || showReference} onClick={run}>{running ? <LoaderCircle className="spin" /> : <Play />}{running ? text.running : text.run}</button></div></div></section>{waveform && <WaveformViewer vcd={waveform} locale={locale} />}</>}
+          {view === 'lab' && <><ArchitectureDiagram track={current.track} activeBlock={context.blockId} locale={locale} compact /><section className="editor-card"><div className="editor-titlebar"><div><FileCode2 /><span>rtl/{current.id}.v</span><em>Verilog-2005</em></div><div><button type="button" onClick={() => updateCode(current.starter)}><RotateCcw />{text.reset}</button>{solved.includes(current.id) && current.referenceSolution && <button type="button" onClick={() => setShowReference((value) => !value)}><BookOpen />{showReference ? text.hideRef : text.ref}</button>}</div></div><Suspense fallback={<div className="editor-loading"><LoaderCircle className="spin" />{locale === 'zh' ? '載入 RTL 編輯器…' : 'Loading RTL editor…'}</div>}><RtlEditor value={showReference ? current.referenceSolution ?? code : code} onChange={showReference ? () => undefined : updateCode} readOnly={showReference} /></Suspense><div className="editor-toolbar"><p><ShieldAlert />{text.local}</p><div><button type="button" className="synth-button" disabled={!engineReady || synthesizing} onClick={synthesize}>{synthesizing ? <LoaderCircle className="spin" /> : <Gauge />}{text.synth}</button><button type="button" className="run-button" disabled={!engineReady || running || showReference} onClick={run}>{running ? <LoaderCircle className="spin" /> : <Play />}{running ? text.running : text.run}</button></div></div></section><HbmBattleFeedback state={battleState} locale={locale} profession={sharedProfile.profession} gender={sharedProfile.gender} element={sharedProfile.element} actorImage={mascotImage(sharedProfile, battleState === 'running' || battleState === 'success' ? 'attack' : 'idle')} reward={battleReward} />{waveform && <Suspense fallback={<div className="waveform-loading">{locale === 'zh' ? '整理波形中…' : 'Preparing waveform…'}</div>}><WaveformViewer vcd={waveform} locale={locale} /></Suspense>}</>}
 
           {view === 'architecture' && <section className="concept-view"><ArchitectureDiagram track={current.track} activeBlock={context.blockId} locale={locale} /><div className="concept-grid"><article><span><Map />{text.placement}</span><p>{localize(context.placement, locale)}</p></article><article><span><Lightbulb />{text.why}</span><ul>{context.why.map((item, index) => <li key={index}>{localize(item, locale)}</li>)}</ul></article><article className="boundary-card"><span><Activity />{text.boundary}</span><p>{localize(context.boundary, locale)}</p></article></div></section>}
 
