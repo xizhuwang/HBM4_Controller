@@ -1,4 +1,5 @@
 import type { Localized } from './challenges';
+import { gpuSpecs } from './gpu-curriculum';
 import { hbm4AdvancedReferences, hbm4AdvancedSpecs, type LabReference } from './hbm4-advanced-specs';
 import { hbm4SystemReferences, hbm4SystemSpecs } from './hbm4-system-specs';
 
@@ -23,6 +24,7 @@ const combinational = b('純組合模組：輸入改變後，同一模擬時間�
 const resetPorts = { clk: b('模組時脈；只在上升緣提交狀態。', 'Module clock; state commits only on rising edges.'), rst_n: b('同步低有效 reset；在 clk 上升緣為 0 時清除所有狀態。', 'Synchronous active-low reset; clears all state when low at a rising edge.') };
 
 export const labSpecs: Record<string, LabSpec> = {
+  ...gpuSpecs,
   ...hbm4AdvancedSpecs,
   ...hbm4SystemSpecs,
   'dram-address-map': spec(

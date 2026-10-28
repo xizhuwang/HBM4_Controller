@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
-import { Activity } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Activity, Download } from 'lucide-react';
 
 type Change = { time: number; value: string };
 type Signal = { code: string; name: string; width: number; changes: Change[] };
@@ -23,7 +23,8 @@ function parseVcd(vcd: string): Signal[] {
       const variable = line.match(/^\$var\s+\S+\s+(\d+)\s+(\S+)\s+(.+?)\s+\$end/);
       if (variable) {
         const [, width, code, reference] = variable;
-        signals.set(code, { code, width: Number(width), name: [...scopes, reference.replace(/\s+\[[^\]]+\]$/, '')].join('.'), changes: [] });
+        // Keep the first (top-level) name when the DUT port aliases a TB signal.
+        if (!signals.has(code)) signals.set(code, { code, width: Number(width), name: [...scopes, reference.replace(/\s+\[[^\]]+\]$/, '')].join('.'), changes: [] });
         continue;
       }
       if (line.startsWith('$enddefinitions')) definitions = false;
@@ -39,15 +40,15 @@ function parseVcd(vcd: string): Signal[] {
   const priority = (signal: Signal) => {
     const name = signal.name.toLowerCase();
     if (name.includes('expected')) return 0;
-    if (/(pulse|valid|ready|error|done|busy|grant|count|control|sum|\.y$)/.test(name)) return 1;
-    if (name.endsWith('.clk') || name.includes('clock')) return 2;
-    if (name.startsWith('tb.')) return 3;
-    return 5;
+    if (/(\.clk$|clock|rst|reset|flush)/.test(name)) return 1;
+    if (/(valid|ready|commit)/.test(name)) return 2;
+    if (/(result|tag|mask|active|busy|grant|count|error|done|pulse|control|sum)/.test(name)) return 3;
+    if (name.split('.').length === 2 && !/\.(i|j|k|n|x|y|z)$/.test(name)) return 4;
+    return 6;
   };
   return [...signals.values()]
-    .filter((signal) => signal.changes.length && signal.width <= 32)
-    .sort((a, b) => priority(a) - priority(b))
-    .slice(0, 10);
+    .filter((signal) => signal.changes.length && signal.width <= 128)
+    .sort((a, b) => priority(a) - priority(b) || a.name.localeCompare(b.name));
 }
 
 function valueAt(changes: Change[], time: number) {
@@ -60,7 +61,16 @@ function valueAt(changes: Change[], time: number) {
 }
 
 export function WaveformViewer({ vcd, locale }: { vcd: string; locale: 'zh' | 'en' }) {
-  const signals = useMemo(() => parseVcd(vcd), [vcd]);
+  const allSignals = useMemo(() => parseVcd(vcd), [vcd]);
+  const [selection, setSelection] = useState<{ vcd: string; codes: string[] } | null>(null);
+  const codes = selection?.vcd === vcd ? selection.codes : allSignals.slice(0, 12).map(signal => signal.code);
+  const signals = allSignals.filter(signal => codes.includes(signal.code));
+  const toggle = (code: string) => setSelection({ vcd, codes: codes.includes(code) ? codes.filter(item => item !== code) : [...codes, code] });
+  const download = () => {
+    const url = URL.createObjectURL(new Blob([vcd], { type: 'text/plain' }));
+    const link = document.createElement('a'); link.href = url; link.download = 'simulation.vcd'; link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
   const timescale = vcd.match(/\$timescale\s+([^$]+)\$end/)?.[1].trim() ?? 'VCD tick';
   const maxTime = Math.max(1, ...signals.flatMap((signal) => signal.changes.map((change) => change.time)));
   const plotX = 170;
@@ -69,13 +79,16 @@ export function WaveformViewer({ vcd, locale }: { vcd: string; locale: 'zh' | 'e
   const height = 38 + signals.length * rowHeight;
   const xFor = (time: number) => plotX + (time / maxTime) * plotWidth;
 
-  if (!signals.length) return null;
+  if (!allSignals.length) return null;
 
   return <section className="mt-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
       <div className="flex items-center gap-2 text-sm font-semibold"><Activity className="size-4 text-primary" />{locale === 'zh' ? '編譯後波形' : 'Simulation waveform'}</div>
       <p className="text-xs text-muted-foreground">{locale === 'zh' ? '紫色為 expected_*；青色為 DUT／測試訊號' : 'Purple: expected_* · Cyan: DUT/test signals'} · tick = {timescale}</p>
+      <button type="button" className="wave-download" onClick={download}><Download />{locale === 'zh' ? '下載 VCD' : 'Download VCD'}</button>
     </div>
+    <details className="wave-signal-picker"><summary>{locale === 'zh' ? `選擇訊號（${signals.length}/${allSignals.length}）` : `Select signals (${signals.length}/${allSignals.length})`}</summary><div>{allSignals.map(signal => <label key={signal.code}><input type="checkbox" checked={codes.includes(signal.code)} onChange={() => toggle(signal.code)} /><span>{signal.name.replace(/^tb\./,'')} <small>[{signal.width}]</small></span></label>)}</div></details>
+    {!signals.length && <p className="px-4 py-3">{locale === 'zh' ? '請至少勾選一個訊號。' : 'Select at least one signal.'}</p>}
     <div className="overflow-x-auto p-3">
       <svg viewBox={`0 0 950 ${height}`} className="min-w-[900px]" aria-label={locale === 'zh' ? '模擬波形圖' : 'Simulation waveform plot'}>
         {Array.from({ length: 11 }, (_, index) => {
@@ -100,7 +113,7 @@ export function WaveformViewer({ vcd, locale }: { vcd: string; locale: 'zh' | 'e
             return <g key={signal.code}><text x="4" y={y + 14} className="fill-foreground font-mono text-[11px]">{shortName.slice(-23)}</text><path d={path} fill="none" stroke={color} strokeWidth="2" /></g>;
           }
           const segments = signal.changes.map((change, changeIndex) => ({ start: change.time, end: signal.changes[changeIndex + 1]?.time ?? maxTime, value: change.value }));
-          return <g key={signal.code}><text x="4" y={y + 14} className="fill-foreground font-mono text-[11px]">{shortName.slice(-23)}</text>{segments.map((segment, segmentIndex) => { const x = xFor(segment.start); const width = Math.max(1, xFor(segment.end) - x); return <g key={segmentIndex}><rect x={x} y={y + 2} width={width} height="20" fill="transparent" stroke={color} /><text x={x + 3} y={y + 16} className="font-mono text-[9px]" fill={color}>{width > 28 ? (/[xz]/i.test(segment.value) ? `b${segment.value}` : `0x${Number.parseInt(segment.value, 2).toString(16)}`) : ''}</text></g>;})}</g>;
+          return <g key={signal.code}><text x="4" y={y + 14} className="fill-foreground font-mono text-[11px]">{shortName.slice(-23)}</text>{segments.map((segment, segmentIndex) => { const x = xFor(segment.start); const width = Math.max(1, xFor(segment.end) - x); return <g key={segmentIndex}><rect x={x} y={y + 2} width={width} height="20" fill="transparent" stroke={color} /><title>{signal.name}: {/[xz]/i.test(segment.value) ? `b${segment.value}` : `0x${BigInt('0b'+segment.value).toString(16)}`} @ {segment.start}</title><text x={x + 3} y={y + 16} className="font-mono text-[9px]" fill={color}>{width > 28 ? (/[xz]/i.test(segment.value) ? `b${segment.value}` : `0x${BigInt('0b'+segment.value).toString(16)}`) : ''}</text></g>;})}</g>;
         })}
       </svg>
     </div>

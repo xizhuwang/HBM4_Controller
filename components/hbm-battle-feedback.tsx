@@ -11,6 +11,7 @@ type Props = {
   element: 'fire' | 'water' | 'wind' | 'earth' | 'four-roots' | 'none';
   actorImage: string;
   reward: number;
+  gpu?: boolean;
 };
 
 const professionEffect = {
@@ -40,8 +41,8 @@ const stateCopy = {
   },
 } as const;
 
-export function HbmBattleFeedback({ state, locale, profession, gender, element, actorImage, reward }: Props) {
-  const text = stateCopy[locale];
+export function HbmBattleFeedback({ state, locale, profession, gender, element, actorImage, reward, gpu = false }: Props) {
+  const text = gpu ? { ...stateCopy[locale], idle: locale === 'zh' ? '準備挑戰 GPU RTL 核心' : 'Ready to challenge the GPU RTL core', target: 'GPU Shader Core' } : stateCopy[locale];
   return (
     <section
       className={`hbm-battle-feedback profession-${profession} element-${element}`}

@@ -8,9 +8,9 @@ The course treats every exercise as an executable contract. A release is accepte
 pnpm test
 ```
 
-The current suite performs 668 checks across 42 bilingual advanced challenges:
+The current suite checks all 65 bilingual controller/system/GPU challenges (the final check total is printed by the runner):
 
-- challenge IDs and order are unique, contiguous, and the expected count is exactly 42;
+- challenge IDs and order are unique, contiguous, and the expected count is exactly 65;
 - none of the foundation challenge IDs from `rtl-interview-lab` are reused;
 - every protocol track has a multi-stage path and a complete architecture diagram;
 - every lab resolves to a highlighted block, explains why it exists, states the PHY/analog boundary, and includes senior design-review questions;
@@ -21,6 +21,8 @@ The current suite performs 668 checks across 42 bilingual advanced challenges:
 - every challenge has Chinese and English content, specifications, test groups, hints, starter code, and an explicit judge type;
 - all simulation reference solutions compile and pass their self-checking testbench;
 - intentionally incomplete starter implementations fail rather than receiving false passes;
+- nine compiling GPU mutations are rejected during simulation: inactive-lane execution, blocked-stage overwrite, missing busy allocation, uncommitted rotation, inactive-mask revival, capacity error, duplicate coalescing, broadcast conflict, and saturation wrap;
+- `node scripts/check-labs.mjs --gpu` runs a focused GPU check using the already-prepared engine; the full `pnpm test` remains the release gate;
 - timeout/watchdog handling rejects non-terminating simulations;
 - VCD-producing exercises emit parseable waveform data;
 - browser engine manifests, integrity metadata, and licenses are present.
@@ -47,7 +49,10 @@ Before tagging a release, check both desktop and narrow/mobile widths:
 7. Reload preserves local progress and edited code.
 8. The site works under `/HBM4_Controller/`, not only at domain root.
 9. Source, license, privacy, and third-party links resolve.
-10. The page never describes a browser pass as CDC, STA, APR, protocol-compliance, or silicon sign-off.
+10. Both panels collapse independently, focus mode expands the workbench, preferences survive reload, and results remain available with the mentor panel hidden.
+11. The GPU guide has eight topics and 24 expandable answers; topic anchors and links to all nine executable exercises work.
+12. GPU lab URLs restore the selected exercise, and source links explain vendor/teaching-model boundaries.
+13. The page never describes a browser pass as CDC, STA, APR, protocol-compliance, or silicon sign-off.
 
 ## Controller RTL acceptance model
 

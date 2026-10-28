@@ -1,4 +1,5 @@
 import type { Localized, TrackId } from './challenges';
+import { gpuContext } from './gpu-curriculum';
 import { hbm4AdvancedContext } from './hbm4-advanced-context';
 import { hbm4SystemContext } from './hbm4-system-context';
 
@@ -16,6 +17,11 @@ const b = (zh: string, en: string): Localized => ({ zh, en });
 const node = (id: string, zh: string, en: string, kind: ArchitectureNode['kind'] = 'digital'): ArchitectureNode => ({ id, label: b(zh, en), kind });
 
 export const architectures: Record<TrackId, Architecture> = {
+  gpu: {
+    title: b('GPU Shader：概念資料流與控制邊界', 'GPU shader: conceptual dataflow and control'),
+    subtitle: b('指令與資料沿主路徑流動；scoreboard、排程與 writeback 另有回饋。這是教學分工圖，不是廠商的完整 block diagram。', 'Instructions and data follow the main path; scoreboard, scheduling, and writeback also have feedback. This is a teaching responsibility map, not a complete vendor block diagram.'),
+    nodes: [node('decode', 'Fetch / Mask / Decode', 'Fetch / mask / decode'), node('scheduler', 'Ready-group Scheduler', 'Ready-group scheduler'), node('scoreboard', 'Dependency Scoreboard', 'Dependency scoreboard'), node('registers', 'Register File / Resources', 'Register file / resources'), node('alu', 'SIMD ALU / Pipeline', 'SIMD ALU / pipeline'), node('lsu', 'LSU / Coalescer', 'LSU / coalescer'), node('memory', 'Cache / Shared Banks', 'Cache / shared banks'), node('writeback', 'Writeback / Completion', 'Writeback / completion'), node('telemetry', 'Performance Counters', 'Performance counters')],
+  },
   dram: {
     title: b('通用 DRAM Controller 數位架構', 'Generic DRAM controller digital architecture'),
     subtitle: b('正確性過濾在前，效能政策在後；所有命令最後經由 PHY 合約送出。', 'Correctness filtering comes before performance policy; all commands leave through the PHY contract.'),
@@ -46,6 +52,7 @@ export const architectures: Record<TrackId, Architecture> = {
 const ctx = (blockId: string, placement: Localized, why: Localized[], review: Localized[], boundary: Localized): LabContext => ({ blockId, placement, why, review, boundary });
 
 export const labContext: Record<string, LabContext> = {
+  ...gpuContext,
   ...hbm4AdvancedContext,
   ...hbm4SystemContext,
   'dram-address-map': ctx('decode', b('位於 ingress frontend 後、queue selection 前；mapping 直接決定平行度與 row locality。', 'After ingress and before queue selection; mapping directly controls parallelism and row locality.'), [b('錯一個 bit 就會把 transaction 送到錯誤 bank/channel。', 'One wrong bit routes a transaction to the wrong bank or channel.'), b('Mapping 是 workload locality、hotspot 與 QoS 的架構選擇，不只是切線。', 'Mapping is a locality, hotspot, and QoS decision—not merely bit slicing.')], [b('page interleaving 與 cache-line interleaving 的 row-hit/parallelism 取捨？', 'How do page and cache-line interleaving trade row hits for parallelism?'), b('Mapping 改版時如何維持資料布局相容？', 'How is data-layout compatibility preserved when mapping changes?')], b('這是數位 RTL；實體 channel/bank 組織與合法 mapping 來自產品規格。', 'This is digital RTL; physical organization and legal mappings come from the product profile.')),

@@ -31,6 +31,7 @@ const { challenges, tracks } = await loadTs('../lib/challenges.ts');
 const { architectures, labContext } = await loadTs('../lib/architectures.ts');
 const { labSpecs, labReferences, parseModulePorts } = await loadTs('../lib/lab-specs.ts');
 const { hbmLearningGuides, hbmTerms } = await loadTs('../lib/hbm-learning-guides.ts');
+const { gpuTopics, gpuSources } = await loadTs('../lib/gpu-interview.ts');
 let checks = 0;
 
 function verify(ok, name) {
@@ -71,7 +72,16 @@ const legacyFoundationIds = new Set([
   'timing-setup-hold', 'ppa-width-discipline', 'xor-cnf',
 ]);
 
-verify(challenges.length === 56, '56 advanced controller and HBM4 system labs');
+verify(challenges.length === 65, '65 controller, HBM4 system, and GPU RTL labs');
+verify(challenges.filter((challenge) => challenge.track === 'gpu').length === 9, 'GPU path contains 9 executable labs');
+verify(gpuTopics.length === 8 && gpuTopics.reduce((n, topic) => n + topic.questions.length, 0) === 24, 'GPU interview guide has 8 topics and 24 questions');
+verify(new Set(gpuTopics.map(topic => topic.id)).size === gpuTopics.length, 'GPU topic anchors are unique');
+for (const topic of gpuTopics) {
+  verify([topic.title, topic.goal, topic.trap, ...topic.diagram, ...topic.questions.flatMap(item => [item.q, item.answer, item.example, item.followup])].every(item => item?.zh && item?.en), `${topic.id} GPU guide is bilingual with answers, examples, and follow-ups`);
+  verify(topic.labs.every(id => challenges.some(item => item.id === id && item.track === 'gpu')), `${topic.id} GPU guide links resolve to RTL exercises`);
+  verify(topic.sources.length > 0 && topic.sources.every(index => /^https:\/\//.test(gpuSources[index]?.url ?? '')), `${topic.id} GPU guide has primary-source links`);
+}
+verify(challenges.filter(item => item.track === 'gpu').every(lab => gpuTopics.some(topic => topic.labs.includes(lab.id))), 'all GPU labs are reachable from the interview guide');
 verify(challenges.filter((challenge) => challenge.track === 'hbm').length === 31, 'HBM path contains 31 executable labs');
 verify(new Set(challenges.map((challenge) => challenge.id)).size === challenges.length, 'unique challenge ids');
 verify(challenges.every((challenge) => !legacyFoundationIds.has(challenge.id)), 'no rtl-interview-lab foundation duplicates');
@@ -86,7 +96,7 @@ for (const track of tracks) {
   verify(Boolean(architectures[track.id]?.nodes.length >= 7), `${track.id} has a full controller architecture`);
 }
 
-for (const challenge of challenges) {
+for (const challenge of challenges.filter((item) => !process.argv.includes('--gpu') || item.track === 'gpu')) {
   verify(Boolean(challenge.title.zh && challenge.title.en && challenge.description.zh && challenge.description.en), `${challenge.id} bilingual content`);
   verify(Boolean(challenge.specs.length >= 1 && challenge.testGroups.length >= 1 && challenge.hints.length >= 1), `${challenge.id} teaching contract`);
   const context = labContext[challenge.id];
@@ -122,6 +132,26 @@ for (const challenge of challenges) {
   verify(Boolean(good.vcd?.includes('$enddefinitions')), `${challenge.id} emits VCD`);
   const starter = await simulate(challenge.starter, challenge.testbench);
   verify(!starter.ok, `${challenge.id} starter rejected: ${starter.console.slice(-100)}`);
+}
+
+// Real behavioral mutations must compile and be rejected by the regression.
+// These exercise common interview bugs rather than just checking an empty starter.
+const gpuMutations = [
+  ['gpu-masked-simd-alu', 'if(active[i]) case(op)', 'if(1) case(op)', 'inactive lanes incorrectly execute'],
+  ['gpu-elastic-pipeline', 'if(ready1) begin', 'if(1) begin', 'overwrite blocked output stage'],
+  ['gpu-register-scoreboard', 'next_busy[dst]=1;', 'next_busy[dst]=0;', 'lose new destination allocation'],
+  ['gpu-ready-warp-scheduler', 'else if(commit&&found)', 'else if(found)', 'rotate without downstream commit'],
+  ['gpu-divergence-sequencer', 'active&predicate', 'predicate', 'reactivate inactive lanes'],
+  ['gpu-occupancy-budget', 'if(rb<g)g=rb;', 'if(rb>g)g=rb;', 'ignore register capacity'],
+  ['gpu-memory-coalescer', 'active[i]&&!found', 'active[i]', 'duplicate segment transactions'],
+  ['gpu-shared-bank-conflicts', 'active[i]&&!duplicate', 'active[i]', 'treat broadcast as conflict'],
+  ['gpu-stall-counters', "issue_cycles!={COUNT_WIDTH{1'b1}}", '1', 'counter wraps at saturation'],
+];
+for (const [id, before, after, name] of gpuMutations) {
+  const lab = challenges.find((item) => item.id === id);
+  assert.ok(lab.referenceSolution.includes(before), `mutation target exists: ${id}`);
+  const result = await simulate(lab.referenceSolution.replace(before, after), lab.testbench);
+  verify(!result.ok && result.phase === 'simulate' && result.console.includes('@@FAIL@@'), `${id} catches ${name}`);
 }
 
 const checkTask = challenges[0].testbench.match(/task check;[\s\S]*?endtask/)[0];

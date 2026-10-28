@@ -125,3 +125,23 @@ Exit evidence:
 Completing the site is evidence of senior-oriented practice, not an automatic job-title guarantee; it should be accompanied by an integration repository. Compose the capstone blocks into a parameterized controller subsystem with CSRs, error telemetry, assertions, a behavioral PHY/memory/link model, requirement-to-test traceability, constrained-random planning, lint/CDC/RDC/formal/synthesis/STA reports, and one written root-cause investigation.
 
 The repository can reach an RTL/DV sign-off-candidate baseline. A silicon claim additionally needs the licensed product standard and errata, actual PHY/DFI/PIPE contract, technology libraries, UPF/DFT/APR/MMMC sign-off, package/interposer and SI/PI/thermal models, compliance testing, and organizational approval described in `SIGNOFF_BOUNDARY.md`.
+
+
+## GPU interview extension — labs 57–65
+
+Open [GPU interview & RTL](https://xizhuwang.github.io/HBM4_Controller/?track=gpu&view=interview).
+The eight-topic guide contains 24 expandable bilingual answers, worked examples, follow-ups, primary-source links, and links to nine executable labs:
+
+1. Masked four-lane signed ALU: width, signedness, inactive lanes.
+2. Two-stage elastic multiply pipeline: ready/valid, tags, masks, stalls, flush.
+3. Register scoreboard: RAW/WAW, same-cycle writeback/reissue, clear/set priority.
+4. Ready-group round-robin scheduler: eligibility, actual commits, conditional fairness.
+5. One-level divergence sequencer: then/else masks, empty paths, reconvergence boundary.
+6. Occupancy budget: register/shared-memory/slot bounds, invalid configuration, tied limits.
+7. Global-memory coalescer: unique segments, masks, alignment, compact output order.
+8. Shared-memory bank analysis: distinct words, read broadcast, per-bank service rounds.
+9. Exclusive stall counters: classification priority, sampling, clear, parameterized saturation.
+
+Widths, group size, segment size, and bank counts are reduced teaching contracts, not vendor implementation facts. Passing these labs does not implement a complete shader, nested control-flow unit, cache hierarchy, GPU ISA, or silicon signoff. Explain latency versus initiation interval, residency versus readiness, and coalescing versus bank conflicts versus cache misses before claiming performance improvements.
+
+Exit evidence: draw the datapath and feedback; trace stalls and same-cycle corner cases; demonstrate reference-model comparison and a caught mutation; explain what the model omits. The side panels can be hidden independently or together in focus mode without losing the editor, console access, or waveform viewer.

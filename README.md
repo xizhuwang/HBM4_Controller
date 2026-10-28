@@ -4,7 +4,7 @@
 
 ## 繁體中文
 
-這是一套可直接在瀏覽器撰寫、編譯與模擬的進階 Controller RTL 互動式課程，共 56 題。基礎 RTL 題保留在獨立的 `rtl-interview-lab`；本專案不重複那些題目，只聚焦 DRAM／HBM／LPDDR／GDDR／PCIe 的專用電路、子系統整合與 controller capstone。
+這是一套可直接在瀏覽器撰寫、編譯與模擬的進階 Controller RTL 互動式課程，共 65 題。基礎 RTL 題保留在獨立的 `rtl-interview-lab`；本專案不重複那些題目，涵蓋 DRAM／HBM／LPDDR／GDDR／PCIe 的專用電路與子系統整合，並加入 GPU shader 面試問答與 RTL 實作。
 
 它的目標不是用「做完題目」取代工作年資，而是把面試與實務會要求的能力變成可重現證據：規格拆解、cycle-accurate RTL、protocol/timing guard、self-checking testbench、波形除錯、合成比較，以及 sign-off 邊界判斷。
 
@@ -19,11 +19,15 @@
 | LPDDR（4 題） | 低功耗序列、初始化/training handshake、DVFS quiesce、controller gate | traffic drain、power/isolation 與 PHY status 的安全順序 |
 | GDDR（4 題） | bus turnaround、command parity、CRC retry ownership、issue capstone | 高速共享資料匯流排與可靠度責任 |
 | PCIe（9 題） | TLP route、credits、tags、replay、completion reorder、LTSSM、admission capstone | Transaction/Data Link/MAC 分層與資源原子配置 |
+| GPU（9 題／8 主題） | shader、SIMD/SIMT、divergence、scoreboard、latency hiding、occupancy、memory 與瓶頸分析 | 24 題雙語參考回答／追問、mask ALU、elastic pipeline、排程、coalescer、bank conflict 與 counters |
+
+GPU 面試入口：[GPU 面試問答](https://xizhuwang.github.io/HBM4_Controller/?track=gpu&view=interview)。
 
 完整的修課順序、每階段輸出與面試證據請見 [課程地圖](docs/CURRICULUM.md)。
 
 ### 線上互動功能
 
+- 左右側欄可獨立收合；專注模式收合兩欄，設定會保存在瀏覽器。即使結果欄收合，RTL 工作台仍可看到 regression 訊息與波形。
 - 每題先提供完整 micro-spec：功能邊界、全部 port 的方向／位寬／語意、clock/reset、ordered behavior、同拍 priority、逐拍範例與假設。
 - 每個 HBM 題目另外顯示 JESD270-4A 條款追溯、在完整 controller 的電路位置，以及教學縮小值與產品參數的邊界；文字為重述，不重製標準表格。
 - 既有 17 個 HBM Controller 題目先用白話目標、生活比喻與名詞卡建立心智模型；新增 14 題則補齊 PHY interface、RAS、repair、package 與 system performance 的可執行合約。
@@ -65,7 +69,7 @@ pnpm dev
 
 ## English
 
-Memory Controller RTL Lab is a browser-based advanced course for writing, compiling, simulating, debugging, and reviewing controller RTL. Its 56 labs are distinct from the foundation exercises in `rtl-interview-lab` and cover DRAM, HBM, LPDDR, GDDR, and PCIe from focused blocks through controller capstones. The 31-lab HBM4 path is organized as 14 modules covering controller, PHY interface, reliability, repair, package contracts, and system performance without reproducing normative standard tables.
+Memory Controller RTL Lab is a browser-based advanced course for writing, compiling, simulating, debugging, and reviewing controller RTL. Its 65 labs are distinct from the foundation exercises in `rtl-interview-lab` and cover DRAM, HBM, LPDDR, GDDR, and PCIe from focused blocks through controller capstones, plus nine reduced GPU RTL exercises and an eight-topic interview guide. The 31-lab HBM4 path is organized as 14 modules covering controller, PHY interface, reliability, repair, package contracts, and system performance without reproducing normative standard tables.
 
 The course produces reproducible evidence of specification decomposition, cycle-accurate RTL, protocol and timing guards, self-checking verification, waveform debugging, and synthesis reasoning. It does not claim that completing a challenge set substitutes for senior-level project ownership.
 

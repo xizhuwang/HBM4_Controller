@@ -1,8 +1,9 @@
 import { controllerChallenges } from './controller-challenges';
+import { gpuChallenges } from './gpu-curriculum';
 
 export type Locale = 'zh' | 'en';
 export type Localized = { zh: string; en: string };
-export type TrackId = 'dram' | 'hbm' | 'lpddr' | 'gddr' | 'pcie';
+export type TrackId = 'dram' | 'hbm' | 'lpddr' | 'gddr' | 'pcie' | 'gpu';
 
 export type PatternRule = { pattern: string; flags?: string; message: Localized; reject?: boolean };
 export type Challenge = {
@@ -33,11 +34,12 @@ export const tracks: { id: TrackId; label: Localized; accent: string }[] = [
   { id: 'lpddr', label: { zh: 'LPDDR Controller', en: 'LPDDR Controller' }, accent: 'lpddr' },
   { id: 'gddr', label: { zh: 'GDDR Controller', en: 'GDDR Controller' }, accent: 'gddr' },
   { id: 'pcie', label: { zh: 'PCIe Controller', en: 'PCIe Controller' }, accent: 'pcie' },
+  { id: 'gpu', label: { zh: 'GPU 面試與 RTL', en: 'GPU interview & RTL' }, accent: 'gpu' },
 ];
 
 // The foundation curriculum remains exclusively in rtl-interview-lab.
 // This repository exports only non-overlapping controller-specialist labs.
-export const challenges: Challenge[] = [...controllerChallenges].sort((a, b) => a.order - b.order);
+export const challenges: Challenge[] = [...controllerChallenges, ...gpuChallenges].sort((a, b) => a.order - b.order);
 
 export const difficultyLabel: Record<Challenge['difficulty'], Localized> = {
   beginner: { zh: '先備', en: 'Prerequisite' },

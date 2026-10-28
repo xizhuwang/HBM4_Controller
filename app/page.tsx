@@ -6,12 +6,13 @@ import {
   Activity, BookOpen, Boxes, Check, CheckCircle2, ChevronRight, Circle, Clock3,
   Code2, Coins, Cpu, ExternalLink, FileCode2, Gauge, GraduationCap, Languages,
   Lightbulb, LoaderCircle, Map, Play, RotateCcw, ScrollText, Search, ShieldAlert,
-  Sparkles, TerminalSquare, TestTube2, Trophy, X, XCircle,
+  Sparkles, TerminalSquare, TestTube2, Trophy, X, XCircle, PanelLeft, PanelRight, Maximize2,
 } from 'lucide-react';
 
 import { ArchitectureDiagram } from '@/components/architecture-diagram';
 import { HbmBattleFeedback, type BattleState } from '@/components/hbm-battle-feedback';
 import { LabSpecSheet } from '@/components/lab-spec-sheet';
+import { GpuInterviewGuide } from '@/components/gpu-interview-guide';
 import { labContext } from '@/lib/architectures';
 import { challenges, difficultyLabel, localize, tracks, type Locale, type TrackId } from '@/lib/challenges';
 
@@ -20,9 +21,9 @@ const WaveformViewer = lazy(() => import('@/components/waveform-viewer').then((m
 
 type Result = { ok: boolean; phase: string; console: string; elapsedMs?: number };
 type AreaResult = { total: number; referenceTotal: number | null; elapsedMs: number };
-type ViewMode = 'spec' | 'lab' | 'architecture' | 'review';
+type ViewMode = 'spec' | 'lab' | 'architecture' | 'review' | 'interview';
 
-const storageKeys = { locale: 'controller-academy:v2:locale', solved: 'controller-academy:v2:solved', code: 'controller-academy:v2:solutions' };
+const storageKeys = { locale: 'controller-academy:v2:locale', solved: 'controller-academy:v2:solved', code: 'controller-academy:v2:solutions', layout: 'controller-academy:v3:panels' };
 const sharedKeys = {
   socEarned: 'academy-shared:v1:soc-earned',
   hbmEarned: 'academy-shared:v1:hbm-earned',
@@ -84,7 +85,7 @@ const storage = {
 
 const copy = {
   zh: {
-    product: 'HBM4 Controller & System Academy', subtitle: 'Controller → PHY → RAS → Repair → Package → Performance', search: '搜尋 HBM4 題目', curriculum: '完整 HBM4 路徑', all: '全部', progress: '完成進度',
+    product: 'HBM4 Controller & System Academy', subtitle: 'Controller → PHY → RAS → Repair → Package → Performance', search: '搜尋題目／GPU 概念', curriculum: '學習路徑', all: '全部', progress: '完成進度',
     spec: '圖解教學與 SPEC', lab: 'RTL 工作台', architecture: '架構總覽', review: 'Design Review', run: '執行 Regression', running: '模擬中…', synth: 'Generic Synthesis', reset: '重設 Starter',
     why: '為什麼一定要做', placement: '它在 Controller 哪裡', boundary: '數位／類比邊界', requirements: '可執行規格', tests: '驗收條件', hints: '分層提示',
     result: 'Regression Console', waiting: '修改 RTL 後執行 regression；編譯、錯誤與波形會留在這裡。', passed: '功能 Regression 通過', failed: '尚未通過',
@@ -92,7 +93,7 @@ const copy = {
     scope: '這些是公開、縮小但可執行的數位控制與介面合約。封裝／SI 題只做 budget ownership，不取代 PHY、package、SI/PI 或 silicon sign-off；產品參數必須追溯到合法取得的標準、PHY 合約與 speed bin。', ref: '通過後檢視 Reference', hideRef: '返回你的 RTL', empty: '找不到符合條件的題目。', cells: 'generic cells',
   },
   en: {
-    product: 'HBM4 Controller & System Academy', subtitle: 'Controller → PHY → RAS → Repair → Package → Performance', search: 'Search HBM4 labs', curriculum: 'Complete HBM4 path', all: 'All', progress: 'Progress',
+    product: 'HBM4 Controller & System Academy', subtitle: 'Controller → PHY → RAS → Repair → Package → Performance', search: 'Search labs / GPU concepts', curriculum: 'Learning paths', all: 'All', progress: 'Progress',
     spec: 'Visual lesson & spec', lab: 'RTL Workbench', architecture: 'Architecture overview', review: 'Design Review', run: 'Run Regression', running: 'Simulating…', synth: 'Generic Synthesis', reset: 'Reset Starter',
     why: 'Why this block exists', placement: 'Where it sits', boundary: 'Digital / analog boundary', requirements: 'Executable requirements', tests: 'Acceptance tests', hints: 'Layered hints',
     result: 'Regression Console', waiting: 'Edit the RTL and run regression. Compile errors, failures, and waveforms stay here.', passed: 'Functional regression passed', failed: 'Not passed',
@@ -203,6 +204,9 @@ export default function Home() {
   const [synthesizing, setSynthesizing] = useState(false);
   const [sharedProfile, setSharedProfile] = useState<SharedProfile>({ wallet: 0, socEarned: 0, gender: 'masculine', profession: 'novice', element: 'none', equipment: [], equippedEquipmentUid: '', elementLevels: { fire: 0, water: 0, wind: 0, earth: 0 }, consumables: { visor: 0, crystal: 0, drone: 0, hammer: 0 } });
   const [backpackOpen, setBackpackOpen] = useState(false);
+  const [panels, setPanels] = useState({ left: false, right: false });
+  const updatePanels = (next: typeof panels) => { setPanels(next); storage.set(storageKeys.layout, next); };
+  const togglePanel = (side: 'left' | 'right') => updatePanels({ ...panels, [side]: !panels[side] });
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const pendingRun = useRef<string | null>(null);
   const pendingSynth = useRef<string | null>(null);
@@ -218,12 +222,24 @@ export default function Home() {
     const haystack = `${challenge.id} ${challenge.title.zh} ${challenge.title.en} ${challenge.description.zh} ${challenge.description.en}`.toLowerCase();
     return matchesTrack && haystack.includes(query.trim().toLowerCase());
   }), [query, track]);
-  const currentIndex = challenges.findIndex((challenge) => challenge.id === current.id);
-  const nextChallenge = challenges[(currentIndex + 1) % challenges.length];
+  const pathChallenges = challenges.filter((challenge) => challenge.track === current.track);
+  const currentIndex = pathChallenges.findIndex((challenge) => challenge.id === current.id);
+  const nextChallenge = pathChallenges[(currentIndex + 1) % pathChallenges.length];
   const equippedItem = sharedProfile.equipment.find((item) => item.uid === sharedProfile.equippedEquipmentUid);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
+      const params = new URLSearchParams(window.location.search);
+      const requested = challenges.find((item) => item.id === params.get('lab'));
+      const requestedTrack = tracks.find((item) => item.id === params.get('track'));
+      const initial = requested ?? (requestedTrack ? challenges.find((item) => item.track === requestedTrack.id) : null);
+      if (initial) { setSelectedId(initial.id); setTrack(initial.track); }
+      if (params.get('view') === 'interview' && initial?.track === 'gpu') setView('interview');
+      try {
+        const saved = JSON.parse(storage.get(storageKeys.layout) ?? 'null');
+        if (saved && typeof saved.left === 'boolean' && typeof saved.right === 'boolean') setPanels(saved);
+        else if (window.matchMedia('(max-width: 760px)').matches) setPanels({ left: true, right: true });
+      } catch { /* invalid layout preferences fall back to open panels */ }
       const savedLocale = storage.get(storageKeys.locale);
       const savedSolved = storage.get(storageKeys.solved);
       const savedCode = storage.get(storageKeys.code);
@@ -297,9 +313,29 @@ export default function Home() {
   }, [current.id, current.points, markSolved, solved]);
 
   const selectChallenge = (id: string) => {
+    const target = challenges.find((item) => item.id === id);
+    if (!target) return;
+    setTrack(target.track);
     setSelectedId(id); setResult(null); setWaveform(''); setArea(null); setHintCount(0); setShowReference(false); setBattleState('idle'); setView('spec');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+  const chooseTrack = (next: TrackId | 'all') => {
+    setQuery('');
+    if (next !== 'all') {
+      const first = challenges.find((item) => item.track === next);
+      if (first && current.track !== next) selectChallenge(first.id);
+    }
+    setTrack(next);
+  };
+  useEffect(() => {
+    if (!loaded.current) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('track', current.track);
+    url.searchParams.set('lab', current.id);
+    if (view === 'interview') url.searchParams.set('view', 'interview');
+    else url.searchParams.delete('view');
+    window.history.replaceState(null, '', url);
+  }, [current.id, current.track, view]);
   const updateCode = (value: string) => {
     setSolutions((previous) => ({ ...previous, [current.id]: value }));
     setResult(null); setWaveform(''); setArea(null); setShowReference(false);
@@ -336,11 +372,17 @@ export default function Home() {
         <div className="header-actions"><span className={`engine-status ${engineReady ? 'ready' : ''}`}><i />{engineReady ? 'Icarus ready' : engineRequested ? 'Loading engine' : (locale === 'zh' ? 'RTL 引擎按需載入' : 'RTL engine on demand')}</span><a className="header-link" href="https://github.com/xizhuwang/HBM4_Controller" target="_blank" rel="noreferrer">{text.source}<ExternalLink /></a><button className="language-button" type="button" onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}><Languages />{locale === 'zh' ? 'EN' : '繁中'}</button></div>
       </header>
 
-      <div className="academy-layout">
-        <aside className="curriculum-panel">
+      <div className="workspace-controls" aria-label={locale === 'zh' ? '工作區版面' : 'Workspace layout'}>
+        <button type="button" aria-controls="curriculum-panel" aria-expanded={!panels.left} onClick={() => togglePanel('left')}><PanelLeft />{locale === 'zh' ? (panels.left ? '展開題目欄' : '收合題目欄') : (panels.left ? 'Show curriculum' : 'Hide curriculum')}</button>
+        <label className="workspace-track"><span>{locale === 'zh' ? '路徑' : 'Path'}</span><select aria-label={locale === 'zh' ? '選擇學習路徑' : 'Choose learning path'} value={track} onChange={event => chooseTrack(event.target.value as TrackId | 'all')}><option value="all">{text.all}</option>{tracks.map(item => <option value={item.id} key={item.id}>{localize(item.label,locale)}</option>)}</select></label>
+        <button type="button" aria-pressed={panels.left && panels.right} onClick={() => updatePanels(panels.left && panels.right ? {left:false,right:false} : {left:true,right:true})}><Maximize2 />{locale === 'zh' ? (panels.left && panels.right ? '還原雙欄' : '專注模式') : (panels.left && panels.right ? 'Restore panels' : 'Focus mode')}</button>
+        <button type="button" aria-controls="mentor-panel" aria-expanded={!panels.right} onClick={() => togglePanel('right')}><PanelRight />{locale === 'zh' ? (panels.right ? '展開提示／結果' : '收合提示／結果') : (panels.right ? 'Show hints / results' : 'Hide hints / results')}</button>
+      </div>
+      <div className="academy-layout" data-left-collapsed={panels.left} data-right-collapsed={panels.right}>
+        <aside className="curriculum-panel" id="curriculum-panel" hidden={panels.left}>
           <label className="search-box"><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={text.search} /></label>
           <div className="panel-kicker"><span>{text.curriculum}</span><strong>{challenges.length}</strong></div>
-          <nav className="track-list" aria-label={text.curriculum}><button type="button" className={track === 'all' ? 'selected' : ''} onClick={() => setTrack('all')}><Boxes /><span>{text.all}</span><b>{challenges.length}</b></button>{tracks.map((item) => <button key={item.id} type="button" className={track === item.id ? 'selected' : ''} onClick={() => setTrack(item.id)}><span className={`track-dot ${item.id}`} /><span>{localize(item.label, locale)}</span><b>{challenges.filter((challenge) => challenge.track === item.id).length}</b></button>)}</nav>
+          <nav className="track-list" aria-label={text.curriculum}><button type="button" className={track === 'all' ? 'selected' : ''} onClick={() => chooseTrack('all')}><Boxes /><span>{text.all}</span><b>{challenges.length}</b></button>{tracks.map((item) => <button key={item.id} type="button" className={track === item.id ? 'selected' : ''} onClick={() => chooseTrack(item.id)}><span className={`track-dot ${item.id}`} /><span>{localize(item.label, locale)}</span><b>{challenges.filter((challenge) => challenge.track === item.id).length}</b></button>)}</nav>
           {(track === 'hbm' || current.track === 'hbm') && <details className="sidebar-roadmap"><summary><span><b>COMPLETE HBM4 LEARNING PATH</b><small>{locale === 'zh' ? '14 模組 · Controller 到系統效能' : '14 modules · controller to system'}</small></span><strong>{challenges.filter((item) => item.track === 'hbm').length} LABS</strong></summary><div>{hbmStages.map((stage, index) => { const completed = stage.labs.filter((id) => solved.includes(id)).length; const active = stage.labs.includes(current.id); return <button key={stage.id} type="button" data-active={active} onClick={() => selectChallenge(stage.labs[0])}><i>{String(index + 1).padStart(2, '0')}</i><span><b>{locale === 'zh' ? stage.zh : stage.en}</b><small>{completed}/{stage.labs.length}</small></span></button>; })}</div></details>}
           <div className="lesson-list">{filtered.length ? filtered.map((item) => <button key={item.id} type="button" className={current.id === item.id ? 'current' : ''} onClick={() => selectChallenge(item.id)}>{solved.includes(item.id) ? <CheckCircle2 /> : <Circle />}<span><strong>{String(item.order).padStart(2, '0')} · {localize(item.title, locale)}</strong><small>{item.id}</small></span></button>) : <p className="empty-list">{text.empty}</p>}</div>
           <section className="shared-profile-card" aria-label={locale === 'zh' ? '跨 Academy 共用夥伴與背包' : 'Shared academy companion and inventory'}>
@@ -354,24 +396,27 @@ export default function Home() {
 
         <section className="workbench">
           <div className="lesson-heading"><div><div className="lesson-meta"><span>{current.track.toUpperCase()}</span><span>{localize(difficultyLabel[current.difficulty], locale)}</span><span><Clock3 />{current.minutes} min</span><span>+{current.points} pts</span></div><h2>{localize(current.title, locale)}</h2><p>{localize(current.description, locale)}</p></div><button type="button" className="next-button" onClick={() => selectChallenge(nextChallenge.id)}>{text.next}<ChevronRight /></button></div>
-          <div className="view-tabs" role="tablist" aria-label="Lesson view"><button type="button" role="tab" aria-selected={view === 'spec'} onClick={() => setView('spec')}><ScrollText />{text.spec}</button><button type="button" role="tab" aria-selected={view === 'lab'} onClick={openLab}><Code2 />{text.lab}</button><button type="button" role="tab" aria-selected={view === 'architecture'} onClick={() => setView('architecture')}><Map />{text.architecture}</button><button type="button" role="tab" aria-selected={view === 'review'} onClick={() => setView('review')}><GraduationCap />{text.review}</button></div>
+          <div className="view-tabs" role="tablist" aria-label="Lesson view">{current.track === 'gpu' && <button type="button" role="tab" aria-selected={view === 'interview'} onClick={() => setView('interview')}><BookOpen />{locale === 'zh' ? 'GPU 面試問答' : 'GPU interview Q&A'}</button>}<button type="button" role="tab" aria-selected={view === 'spec'} onClick={() => setView('spec')}><ScrollText />{text.spec}</button><button type="button" role="tab" aria-selected={view === 'lab'} onClick={openLab}><Code2 />{text.lab}</button><button type="button" role="tab" aria-selected={view === 'architecture'} onClick={() => setView('architecture')}><Map />{text.architecture}</button><button type="button" role="tab" aria-selected={view === 'review'} onClick={() => setView('review')}><GraduationCap />{text.review}</button></div>
 
+          {view === 'interview' && current.track === 'gpu' && <GpuInterviewGuide locale={locale} selectedId={current.id} onSelect={selectChallenge} />}
+          {view === 'spec' && current.track === 'gpu' && <button type="button" className="gpu-guide-entry" onClick={() => setView('interview')}><BookOpen /><span>{locale === 'zh' ? '先看 GPU 面試問答：8 個主題、參考回答與追問' : 'Open GPU interview guide: 8 topics, answers, and follow-ups'}</span><ChevronRight /></button>}
+          {view === 'lab' && panels.right && result && <details className={`workspace-result ${result.ok ? 'pass' : 'fail'}`} open={!result.ok}><summary>{result.ok ? text.passed : text.failed} · {result.phase}</summary><pre>{result.console.replaceAll('@@PASS@@', '').replaceAll('@@FAIL@@', '').trim()}</pre></details>}
           {view === 'spec' && <LabSpecSheet challenge={current} locale={locale} onStart={openLab} />}
 
-          {view === 'lab' && <><ArchitectureDiagram track={current.track} activeBlock={context.blockId} locale={locale} compact /><section className="editor-card"><div className="editor-titlebar"><div><FileCode2 /><span>rtl/{current.id}.v</span><em>Verilog-2005</em></div><div><button type="button" onClick={() => updateCode(current.starter)}><RotateCcw />{text.reset}</button>{solved.includes(current.id) && current.referenceSolution && <button type="button" onClick={() => setShowReference((value) => !value)}><BookOpen />{showReference ? text.hideRef : text.ref}</button>}</div></div><Suspense fallback={<div className="editor-loading"><LoaderCircle className="spin" />{locale === 'zh' ? '載入 RTL 編輯器…' : 'Loading RTL editor…'}</div>}><RtlEditor value={showReference ? current.referenceSolution ?? code : code} onChange={showReference ? () => undefined : updateCode} readOnly={showReference} /></Suspense><div className="editor-toolbar"><p><ShieldAlert />{text.local}</p><div><button type="button" className="synth-button" disabled={!engineReady || synthesizing} onClick={synthesize}>{synthesizing ? <LoaderCircle className="spin" /> : <Gauge />}{text.synth}</button><button type="button" className="run-button" disabled={!engineReady || running || showReference} onClick={run}>{running ? <LoaderCircle className="spin" /> : <Play />}{running ? text.running : text.run}</button></div></div></section><HbmBattleFeedback state={battleState} locale={locale} profession={sharedProfile.profession} gender={sharedProfile.gender} element={sharedProfile.element} actorImage={mascotImage(sharedProfile, battleState === 'running' || battleState === 'success' ? 'attack' : 'idle')} reward={battleReward} />{waveform && <Suspense fallback={<div className="waveform-loading">{locale === 'zh' ? '整理波形中…' : 'Preparing waveform…'}</div>}><WaveformViewer vcd={waveform} locale={locale} /></Suspense>}</>}
+          {view === 'lab' && <><ArchitectureDiagram track={current.track} activeBlock={context.blockId} locale={locale} compact /><section className="editor-card"><div className="editor-titlebar"><div><FileCode2 /><span>rtl/{current.id}.v</span><em>Verilog-2005</em></div><div><button type="button" onClick={() => updateCode(current.starter)}><RotateCcw />{text.reset}</button>{solved.includes(current.id) && current.referenceSolution && <button type="button" onClick={() => setShowReference((value) => !value)}><BookOpen />{showReference ? text.hideRef : text.ref}</button>}</div></div><Suspense fallback={<div className="editor-loading"><LoaderCircle className="spin" />{locale === 'zh' ? '載入 RTL 編輯器…' : 'Loading RTL editor…'}</div>}><RtlEditor value={showReference ? current.referenceSolution ?? code : code} onChange={showReference ? () => undefined : updateCode} readOnly={showReference} /></Suspense><div className="editor-toolbar"><p><ShieldAlert />{text.local}</p><div><button type="button" className="synth-button" disabled={!engineReady || synthesizing} onClick={synthesize}>{synthesizing ? <LoaderCircle className="spin" /> : <Gauge />}{text.synth}</button><button type="button" className="run-button" disabled={!engineReady || running || showReference} onClick={run}>{running ? <LoaderCircle className="spin" /> : <Play />}{running ? text.running : text.run}</button></div></div></section><HbmBattleFeedback gpu={current.track === 'gpu'} state={battleState} locale={locale} profession={sharedProfile.profession} gender={sharedProfile.gender} element={sharedProfile.element} actorImage={mascotImage(sharedProfile, battleState === 'running' || battleState === 'success' ? 'attack' : 'idle')} reward={battleReward} />{waveform && <Suspense fallback={<div className="waveform-loading">{locale === 'zh' ? '整理波形中…' : 'Preparing waveform…'}</div>}><WaveformViewer vcd={waveform} locale={locale} /></Suspense>}</>}
 
           {view === 'architecture' && <section className="concept-view"><ArchitectureDiagram track={current.track} activeBlock={context.blockId} locale={locale} /><div className="concept-grid"><article><span><Map />{text.placement}</span><p>{localize(context.placement, locale)}</p></article><article><span><Lightbulb />{text.why}</span><ul>{context.why.map((item, index) => <li key={index}>{localize(item, locale)}</li>)}</ul></article><article className="boundary-card"><span><Activity />{text.boundary}</span><p>{localize(context.boundary, locale)}</p></article></div></section>}
 
           {view === 'review' && <section className="review-view"><div className="review-intro"><GraduationCap /><div><h3>{text.questions}</h3><p>{locale === 'zh' ? '先口頭回答，再用你寫的 RTL、assertion、波形與測試證明。只講名詞不算完成。' : 'Answer verbally, then prove it with RTL, assertions, waveforms, and tests. Naming concepts is not completion.'}</p></div></div><ol className="review-questions">{context.review.map((item, index) => <li key={index}><span>{index + 1}</span><p>{localize(item, locale)}</p></li>)}</ol><div className="evidence-list"><h3>{text.evidence}</h3>{[locale === 'zh' ? '逐拍指出 state、timer、valid/tag 更新位置。' : 'Identify state, timer, and valid/tag updates cycle by cycle.', locale === 'zh' ? '提出一個 safety assertion、一個 liveness property。' : 'Provide one safety assertion and one liveness property.', locale === 'zh' ? '設計正常、邊界、illegal/error injection 三類測試。' : 'Design normal, boundary, and illegal/error-injection tests.', locale === 'zh' ? '說明 PPA critical path 與可接受的 pipeline latency。' : 'Explain the PPA critical path and acceptable pipeline latency.'].map((item) => <p key={item}><Check />{item}</p>)}</div></section>}
         </section>
 
-        <aside className="mentor-panel">
+        <aside className="mentor-panel" id="mentor-panel" hidden={panels.right}>
           <section className={`result-card ${result ? result.ok ? 'pass' : 'fail' : ''}`} aria-live="polite"><div className="result-heading"><TerminalSquare /><span>{text.result}</span>{result?.ok ? <CheckCircle2 /> : result ? <XCircle /> : null}</div>{!result ? <p className="waiting-copy">{text.waiting}</p> : <><strong>{result.ok ? text.passed : text.failed}</strong><small>{result.phase} · {Math.round(result.elapsedMs ?? 0)} ms</small><pre>{result.console.replaceAll('@@PASS@@', '').replaceAll('@@FAIL@@', '').trim()}</pre></>}{area && <div className="area-result"><span>{text.cells}</span><b>{area.total}</b>{area.referenceTotal != null && <small>reference {area.referenceTotal} · Δ {area.total - area.referenceTotal}</small>}</div>}</section>
           <section className="mentor-card"><h3><Lightbulb />{text.why}</h3><ul>{context.why.map((item, index) => <li key={index}>{localize(item, locale)}</li>)}</ul></section>
           <section className="mentor-card"><h3><TestTube2 />{text.requirements}</h3><ul>{current.specs.map((item, index) => <li key={index}>{localize(item, locale)}</li>)}</ul></section>
           <section className="mentor-card"><h3><CheckCircle2 />{text.tests}</h3><ul>{current.testGroups.map((item, index) => <li key={index}>{localize(item, locale)}</li>)}</ul></section>
           <section className="mentor-card hints-card"><h3><Lightbulb />{text.hints}</h3>{current.hints.slice(0, hintCount).map((item, index) => <p key={index}><b>{index + 1}</b>{localize(item, locale)}</p>)}<button type="button" disabled={hintCount >= current.hints.length} onClick={() => setHintCount((value) => Math.min(current.hints.length, value + 1))}>{hintCount >= current.hints.length ? (locale === 'zh' ? '提示已全部顯示' : 'All hints shown') : (locale === 'zh' ? '揭示下一層提示' : 'Reveal next hint')}</button></section>
-          <p className="scope-note">{text.scope}</p>
+          <p className="scope-note">{current.track === 'gpu' ? localize(context.boundary, locale) : text.scope}</p>
         </aside>
       </div>
       {backpackOpen && <div className="shared-backpack-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setBackpackOpen(false); }}><dialog open className="shared-backpack-dialog" aria-labelledby="shared-backpack-title"><header><div><span>{locale === 'zh' ? '跨 Academy 共用資料' : 'Shared Academy data'}</span><h2 id="shared-backpack-title">{locale === 'zh' ? '夥伴與背包' : 'Companion & Inventory'}</h2></div><button type="button" aria-label={locale === 'zh' ? '關閉背包' : 'Close inventory'} onClick={() => setBackpackOpen(false)}><X /></button></header><div className="shared-backpack-grid"><article className={`shared-companion-preview element-${sharedProfile.element}`}><img src={mascotImage(sharedProfile)} alt="" /><h3>{professionNames[sharedProfile.profession][locale]}</h3><p>{locale === 'zh' ? '角色、職業、裝備與屬性會同步回 SoC RTL Academy。' : 'Character, class, gear, and element sync back to SoC RTL Academy.'}</p>{equippedItem && <strong>{equipmentCatalog[equippedItem.id].icon} {equipmentCatalog[equippedItem.id][locale]} · +{equippedItem.stars}</strong>}</article><div className="shared-inventory"><section><h3>{locale === 'zh' ? `裝備（${sharedProfile.equipment.length}）` : `Gear (${sharedProfile.equipment.length})`}</h3><div className="inventory-options"><button type="button" aria-pressed={!sharedProfile.equippedEquipmentUid} onClick={() => equipSharedItem('')}>{locale === 'zh' ? '卸下裝備' : 'Unequip'}</button>{sharedProfile.equipment.map((item) => { const meta = equipmentCatalog[item.id]; const usable = meta.profession === sharedProfile.profession; return <button key={item.uid} type="button" disabled={!usable} aria-pressed={item.uid === sharedProfile.equippedEquipmentUid} onClick={() => equipSharedItem(item.uid)}><span>{meta.icon}</span><b>{meta[locale]}</b><small>+{item.stars}{!usable ? ` · ${professionNames[meta.profession][locale]}` : ''}</small></button>; })}</div>{sharedProfile.equipment.length === 0 && <p>{locale === 'zh' ? '背包還沒有裝備，可到 SoC Academy 商店取得。' : 'No gear yet. Visit the SoC Academy shop.'}</p>}</section><section><h3>{locale === 'zh' ? '屬性裝備' : 'Element loadout'}</h3><div className="element-options"><button type="button" aria-pressed={sharedProfile.element === 'none'} onClick={() => equipSharedElement('none')}>{locale === 'zh' ? '無屬性' : 'None'}</button>{(Object.keys(elementCatalog) as SharedElement[]).map((id) => <button key={id} type="button" disabled={sharedProfile.elementLevels[id] === 0} aria-pressed={sharedProfile.element === id} onClick={() => equipSharedElement(id)}>{elementCatalog[id].icon} {elementCatalog[id][locale]} Lv.{sharedProfile.elementLevels[id]}</button>)}<button type="button" disabled={!Object.values(sharedProfile.elementLevels).every((level) => level > 0)} aria-pressed={sharedProfile.element === 'four-roots'} onClick={() => equipSharedElement('four-roots')}>✨ {locale === 'zh' ? '四靈根' : 'Four Roots'}</button></div></section><section><h3>{locale === 'zh' ? '消耗品' : 'Consumables'}</h3><div className="consumable-list">{(Object.keys(consumableNames) as (keyof SharedConsumables)[]).map((id) => <span key={id}><i>{consumableNames[id].icon}</i><b>{consumableNames[id][locale]}</b><strong>×{sharedProfile.consumables[id]}</strong></span>)}</div></section></div></div><footer><a href="https://xizhuwang.github.io/rtl-interview-lab/">{locale === 'zh' ? '前往完整商店、鍛造與角色設定' : 'Open the full shop, forge, and character settings'}<ExternalLink /></a></footer></dialog></div>}
