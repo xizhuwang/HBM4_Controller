@@ -13,6 +13,7 @@ export const gpuSources = [
   { title: 'NVIDIA · CUDA Programming Guide', url: 'https://docs.nvidia.com/cuda/cuda-programming-guide/' },
   { title: 'NVIDIA · Nsight Compute Profiling Guide', url: 'https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html' },
   { title: 'AMD · HIP performance optimization', url: 'https://rocm.docs.amd.com/projects/HIP/en/latest/understand/performance_optimization.html' },
+  { title: 'Khronos · Shader programs', url: 'https://docs.vulkan.org/spec/latest/chapters/shaders.html' },
 ];
 type Question = { q: Localized; answer: Localized; example: Localized; followup: Localized };
 export type GpuTopic = { id: string; title: Localized; goal: Localized; diagram: Localized[]; trap: Localized; labs: string[]; sources: number[]; questions: Question[] };
@@ -24,7 +25,7 @@ export const gpuTopics: GpuTopic[] = [
     goal: b('能畫出指令、operand、結果的路徑，並指出哪裡會停頓。', 'Draw the instruction, operand, and result paths, and locate stalls.'),
     diagram: [b('Fetch／Decode', 'Fetch / decode'), b('排程＋相依檢查', 'Schedule + dependency check'), b('Register read', 'Register read'), b('ALU／Load-store', 'ALU / load-store'), b('Writeback＋解除 busy', 'Writeback + release busy')],
     trap: b('這是概念路徑。實際 GPU 可有分離 queue、operand collector、多發射與不同完成順序，不能把圖當成固定五級 CPU。', 'This is conceptual. Real GPUs may have separate queues, operand collectors, multiple issue paths, and differing completion orders; this is not a fixed five-stage CPU.'),
-    labs: ['gpu-elastic-pipeline', 'gpu-register-scoreboard'], sources: [1,2],
+    labs: ['gpu-elastic-pipeline', 'gpu-register-scoreboard'], sources: [4,1,2],
     questions: [
       q('請畫出一條 shader 指令如何執行。','How does one shader instruction execute?', '先選有指令且可發射的 group，decode 後檢查 operand／資源，讀 register，送 ALU 或 LSU，最後寫回並解除相依。load 可能晚於 ALU 完成，因此 tag、目的 register、active mask 必須跟著指令走；實際 stage 劃分依架構而定。','Choose an issuable group, decode and check operands/resources, read registers, execute in the ALU or LSU, then write back and release dependencies. Loads may complete later than ALU instructions, so carry tags, destinations, and masks. Physical stage boundaries are architecture-dependent.', 'r3=r1+r2 的結果未回來前，讀 r3 的下一條不能直接發射；另一個獨立 group 則可能先發射。','Until r3=r1+r2 completes, a dependent read of r3 cannot issue; an independent group may issue instead.', '哪個模組知道結果屬於哪個 thread／register？','Which block associates a result with its thread/register?'),
       q('Latency、throughput、II 有何不同？','How do latency, throughput, and II differ?', 'Latency 是單筆工作從定義好的起點到終點的時間；II 是連續接受兩筆工作的最短間隔；throughput 是每單位時間完成量。五級 pipeline 可以有五拍 latency 且 II=1，但資料相依、stall 或 shared resource 會降低實際 throughput。','Latency measures one item between defined endpoints. II is the minimum interval between accepted items. Throughput measures completions per unit time. Five stages may have five-cycle latency and II=1, but dependencies, stalls, and shared resources reduce achieved throughput.', '先明訂是在 input handshake 到 out_valid，還是到 output handshake；backpressure 會使後者變長。','Specify whether latency ends at out_valid or output handshake; backpressure extends the latter.', '加入一級 pipeline，哪個指標一定變好？','Which metric necessarily improves when adding a pipeline stage?'),

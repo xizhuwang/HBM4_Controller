@@ -60,11 +60,12 @@ function valueAt(changes: Change[], time: number) {
   return value;
 }
 
-export function WaveformViewer({ vcd, locale }: { vcd: string; locale: 'zh' | 'en' }) {
+export function WaveformViewer({ vcd, locale, preferredSignals, reference = false }: { vcd: string; locale: 'zh' | 'en'; preferredSignals?: string[]; reference?: boolean }) {
   const allSignals = useMemo(() => parseVcd(vcd), [vcd]);
   const [selection, setSelection] = useState<{ vcd: string; codes: string[] } | null>(null);
-  const codes = selection?.vcd === vcd ? selection.codes : allSignals.slice(0, 12).map(signal => signal.code);
-  const signals = allSignals.filter(signal => codes.includes(signal.code));
+  const defaults = preferredSignals ? preferredSignals.flatMap(name => allSignals.filter(signal => signal.name === `tb.${name}`)) : allSignals.slice(0, 12);
+  const codes = selection?.vcd === vcd ? selection.codes : defaults.map(signal => signal.code);
+  const signals = codes.map(code => allSignals.find(signal => signal.code === code)).filter((signal): signal is Signal => Boolean(signal));
   const toggle = (code: string) => setSelection({ vcd, codes: codes.includes(code) ? codes.filter(item => item !== code) : [...codes, code] });
   const download = () => {
     const url = URL.createObjectURL(new Blob([vcd], { type: 'text/plain' }));
@@ -72,7 +73,7 @@ export function WaveformViewer({ vcd, locale }: { vcd: string; locale: 'zh' | 'e
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   const timescale = vcd.match(/\$timescale\s+([^$]+)\$end/)?.[1].trim() ?? 'VCD tick';
-  const maxTime = Math.max(1, ...signals.flatMap((signal) => signal.changes.map((change) => change.time)));
+  const maxTime = useMemo(() => { let end=1; for(const match of vcd.matchAll(/^#(\d+)\s*$/gm)) end=Math.max(end,Number(match[1])); return end; }, [vcd]);
   const plotX = 170;
   const plotWidth = 760;
   const rowHeight = 42;
@@ -83,14 +84,14 @@ export function WaveformViewer({ vcd, locale }: { vcd: string; locale: 'zh' | 'e
 
   return <section className="mt-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
-      <div className="flex items-center gap-2 text-sm font-semibold"><Activity className="size-4 text-primary" />{locale === 'zh' ? '編譯後波形' : 'Simulation waveform'}</div>
+      <div className="flex items-center gap-2 text-sm font-semibold"><Activity className="size-4 text-primary" />{reference ? (locale === 'zh' ? '參考解答實際模擬波形' : 'Simulated reference trace') : (locale === 'zh' ? '編譯後波形' : 'Simulation waveform')}</div>
       <p className="text-xs text-muted-foreground">{locale === 'zh' ? '紫色為 expected_*；青色為 DUT／測試訊號' : 'Purple: expected_* · Cyan: DUT/test signals'} · tick = {timescale}</p>
       <button type="button" className="wave-download" onClick={download}><Download />{locale === 'zh' ? '下載 VCD' : 'Download VCD'}</button>
     </div>
     <details className="wave-signal-picker"><summary>{locale === 'zh' ? `選擇訊號（${signals.length}/${allSignals.length}）` : `Select signals (${signals.length}/${allSignals.length})`}</summary><div>{allSignals.map(signal => <label key={signal.code}><input type="checkbox" checked={codes.includes(signal.code)} onChange={() => toggle(signal.code)} /><span>{signal.name.replace(/^tb\./,'')} <small>[{signal.width}]</small></span></label>)}</div></details>
     {!signals.length && <p className="px-4 py-3">{locale === 'zh' ? '請至少勾選一個訊號。' : 'Select at least one signal.'}</p>}
     <div className="overflow-x-auto p-3">
-      <svg viewBox={`0 0 950 ${height}`} className="min-w-[900px]" aria-label={locale === 'zh' ? '模擬波形圖' : 'Simulation waveform plot'}>
+      <svg viewBox={`0 0 950 ${height}`} style={{width:'100%',height:'auto'}} className="min-w-[900px]" aria-label={locale === 'zh' ? '模擬波形圖' : 'Simulation waveform plot'}>
         {Array.from({ length: 11 }, (_, index) => {
           const x = plotX + index * (plotWidth / 10);
           return <g key={index}><line x1={x} x2={x} y1={24} y2={height} stroke="currentColor" className="text-border" strokeWidth="1" /><text x={x} y={15} textAnchor="middle" className="fill-muted-foreground font-mono text-[10px]">{Math.round((maxTime * index) / 10)}</text></g>;
@@ -117,6 +118,6 @@ export function WaveformViewer({ vcd, locale }: { vcd: string; locale: 'zh' | 'e
         })}
       </svg>
     </div>
-    <p className="border-t border-border px-4 py-3 text-xs leading-5 text-muted-foreground">{locale === 'zh' ? '波形來自同一次瀏覽器內模擬。若題目的 testbench 提供 expected_* golden 訊號，會一起顯示以協助逐拍比對。' : 'Waveforms come from the same in-browser simulation. When a testbench exposes expected_* golden signals, they appear for cycle-by-cycle comparison.'}</p>
+    <p className="border-t border-border px-4 py-3 text-xs leading-5 text-muted-foreground">{reference ? (locale === 'zh' ? '這是已驗收參考解答的模擬結果，不是你的程式執行結果。圖上的時間單位由 VCD 定義。' : 'This is a verified reference simulation, not the execution of your code. Time units come from the VCD.') : (locale === 'zh' ? '波形來自同一次瀏覽器內模擬。若題目的 testbench 提供 expected_* golden 訊號，會一起顯示以協助逐拍比對。' : 'Waveforms come from the same in-browser simulation. When a testbench exposes expected_* golden signals, they appear for cycle-by-cycle comparison.')}</p>
   </section>;
 }

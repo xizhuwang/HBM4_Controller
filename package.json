@@ -12,7 +12,8 @@
     "test": "node scripts/prepare-engine.mjs && node scripts/check-labs.mjs",
     "start": "vite preview --config vite.github.config.ts",
     "lint": "tsc --noEmit && oxlint app lib components github-main.tsx vite.github.config.ts",
-    "format": "oxfmt"
+    "format": "oxfmt",
+    "traces:gpu": "node scripts/prepare-engine.mjs && node scripts/generate-gpu-traces.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",

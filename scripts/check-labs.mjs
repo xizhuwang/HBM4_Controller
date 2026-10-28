@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { Worker } from 'node:worker_threads';
 import ts from 'typescript';
+import { createHash } from 'node:crypto';
 
 const moduleUrls = new Map();
 
@@ -33,6 +34,11 @@ const { labSpecs, labReferences, parseModulePorts } = await loadTs('../lib/lab-s
 const { hbmLearningGuides, hbmTerms } = await loadTs('../lib/hbm-learning-guides.ts');
 const { gpuTopics, gpuSources } = await loadTs('../lib/gpu-interview.ts');
 const { gpuAnswerChecks } = await loadTs('../lib/gpu-answer-checks.ts');
+const { gpuTerms, gpuTopicTerms } = await loadTs('../lib/gpu-glossary.ts');
+const { referenceLineNote } = await loadTs('../lib/gpu-line-notes.ts');
+const { gpuReferenceTraces } = await loadTs('../lib/gpu-reference-traces.ts');
+const traceManifest = JSON.parse(await readFile(new URL('../public/gpu-traces/manifest.json', import.meta.url), 'utf8'));
+const sha256 = text => createHash('sha256').update(text).digest('hex');
 let checks = 0;
 
 function verify(ok, name) {
@@ -76,8 +82,10 @@ const legacyFoundationIds = new Set([
 verify(challenges.length === 65, '65 controller, HBM4 system, and GPU RTL labs');
 verify(challenges.filter((challenge) => challenge.track === 'gpu').length === 9, 'GPU path contains 9 executable labs');
 verify(gpuTopics.length === 8 && gpuTopics.reduce((n, topic) => n + topic.questions.length, 0) === 24, 'GPU interview guide has 8 topics and 24 questions');
+verify(gpuTerms.length >= 35 && new Set(gpuTerms.map(item => item.id)).size === gpuTerms.length && gpuTerms.every(item => item.name && item.full && item.meaning.zh && item.meaning.en && item.example.zh && item.example.en), 'GPU glossary is complete, bilingual, and uniquely indexed');
 verify(new Set(gpuTopics.map(topic => topic.id)).size === gpuTopics.length, 'GPU topic anchors are unique');
 for (const topic of gpuTopics) {
+  verify(gpuTopicTerms[topic.id]?.every(id => gpuTerms.some(term => term.id === id)), `${topic.id} glossary terms resolve`);
   verify(gpuAnswerChecks[topic.id]?.length === topic.questions.length && gpuAnswerChecks[topic.id].every(item => item.followup?.zh && item.followup?.en && item.checks.length >= 2 && item.checks.every(check => check.zh && check.en)), `${topic.id} has answer criteria and complete bilingual follow-up answers`);
   verify([topic.title, topic.goal, topic.trap, ...topic.diagram, ...topic.questions.flatMap(item => [item.q, item.answer, item.example, item.followup])].every(item => item?.zh && item?.en), `${topic.id} GPU guide is bilingual with answers, examples, and follow-ups`);
   verify(topic.labs.every(id => challenges.some(item => item.id === id && item.track === 'gpu')), `${topic.id} GPU guide links resolve to RTL exercises`);
@@ -99,6 +107,16 @@ for (const track of tracks) {
 }
 
 for (const challenge of challenges.filter((item) => !process.argv.includes('--gpu') || item.track === 'gpu')) {
+  if (challenge.track === 'gpu') {
+    verify(challenge.referenceSolution.split('\n').filter(line => line.trim()).every(line => { const note=referenceLineNote(line,challenge,labSpecs[challenge.id]);return note?.zh && note?.en; }), `${challenge.id} every nonempty reference line has a bilingual explanation`);
+    const trace = gpuReferenceTraces[challenge.id];
+    verify(Boolean(trace?.notes.length >= 2 && trace.signals.length >= 5), `${challenge.id} reference trace has reading guidance and selected signals`);
+    verify(traceManifest[challenge.id]?.contract === sha256(challenge.referenceSolution+'\n'+trace.testbench), `${challenge.id} reference trace matches current RTL and teaching testbench`);
+    const savedVcd = await readFile(new URL('../public/gpu-traces/'+challenge.id+'.vcd', import.meta.url), 'utf8');
+    verify(savedVcd.includes('$enddefinitions') && traceManifest[challenge.id].vcd === sha256(savedVcd), `${challenge.id} saved reference waveform is intact`);
+    const teaching = await simulate(challenge.referenceSolution, trace.testbench);
+    verify(teaching.ok, `${challenge.id} teaching timing scenario accepts: ${teaching.ok ? '' : teaching.console}`);
+  }
   verify(Boolean(challenge.title.zh && challenge.title.en && challenge.description.zh && challenge.description.en), `${challenge.id} bilingual content`);
   verify(Boolean(challenge.specs.length >= 1 && challenge.testGroups.length >= 1 && challenge.hints.length >= 1), `${challenge.id} teaching contract`);
   const context = labContext[challenge.id];

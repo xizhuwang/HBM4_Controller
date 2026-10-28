@@ -32,6 +32,8 @@ GPU 入口：[GPU](https://xizhuwang.github.io/HBM4_Controller/?track=gpu&view=i
 - 每個 HBM 題目另外顯示 JESD270-4A 條款追溯、在完整 controller 的電路位置，以及教學縮小值與產品參數的邊界；文字為重述，不重製標準表格。
 - 既有 17 個 HBM Controller 題目先用白話目標、生活比喻與名詞卡建立心智模型；新增 14 題則補齊 PHY interface、RAS、repair、package 與 system performance 的可執行合約。
 - 繁體中文／英文題目、規格、提示與職務對應。
+- 所有題目的參考程式均可隨時開啟；GPU 九題另外提供逐行解說與已驗收參考程式實際產生的時序圖。查看解答不會改動自己的程式，也不會自動通關。
+- GPU 名詞卡以白話區分 Shader 程式、Shader Core 硬體、LSU、ALU 等，並可搜尋完整雙語小辭典。
 - 瀏覽器內 Icarus Verilog 編譯與 self-checking simulation。
 - 每題都產生 VCD，可下載後用 GTKWave 等工具做 cycle-by-cycle 除錯。
 - 瀏覽器內 Yosys generic-cell 統計，用同一工具版本比較 RTL 相對複雜度。

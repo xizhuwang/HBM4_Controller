@@ -1,0 +1,217 @@
+$date
+	Wed Oct 28 13:36:44 2026
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ps
+$end
+$scope module tb $end
+$var wire 1 ! req_ready $end
+$var wire 4 " path_mask [3:0] $end
+$var wire 1 # path_else $end
+$var wire 1 $ out_valid $end
+$var wire 8 % out_tag [7:0] $end
+$var wire 1 & last $end
+$var reg 4 ' active [3:0] $end
+$var reg 1 ( clk $end
+$var reg 1 ) flush $end
+$var reg 1 * out_ready $end
+$var reg 4 + predicate [3:0] $end
+$var reg 8 , req_tag [7:0] $end
+$var reg 1 - req_valid $end
+$var reg 1 . rst_n $end
+$scope module d $end
+$var wire 4 / active [3:0] $end
+$var wire 1 0 clk $end
+$var wire 1 1 flush $end
+$var wire 1 2 last $end
+$var wire 1 3 out_ready $end
+$var wire 1 4 out_valid $end
+$var wire 1 5 path_else $end
+$var wire 1 6 pending $end
+$var wire 4 7 predicate [3:0] $end
+$var wire 1 8 req_ready $end
+$var wire 8 9 req_tag [7:0] $end
+$var wire 1 : req_valid $end
+$var wire 1 ; rst_n $end
+$var wire 4 < path_mask [3:0] $end
+$var wire 8 = out_tag [7:0] $end
+$var wire 1 > has_then $end
+$var reg 4 ? else_pending [3:0] $end
+$var reg 8 @ tag [7:0] $end
+$var reg 4 A then_pending [3:0] $end
+$upscope $end
+$scope task check $end
+$var reg 1 B condition $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+$comment Show the parameter values. $end
+$dumpall
+$end
+#0
+$dumpvars
+xB
+bx A
+bx @
+bx ?
+x>
+bx =
+b0 <
+0;
+0:
+b1000001 9
+08
+b101 7
+x6
+05
+04
+03
+02
+01
+00
+b1111 /
+0.
+0-
+b1000001 ,
+b101 +
+0*
+0)
+0(
+b1111 '
+0&
+bx %
+0$
+0#
+b0 "
+0!
+$end
+#5000
+06
+b0 %
+b0 =
+b0 @
+b0 ?
+0>
+b0 A
+10
+1(
+#10000
+1!
+18
+1:
+1-
+1;
+1.
+00
+0(
+#15000
+b101 "
+b101 <
+1$
+14
+0!
+08
+16
+b1000001 %
+b1000001 =
+b1000001 @
+b1010 ?
+1>
+b101 A
+10
+1(
+#16000
+1B
+#20000
+0:
+0-
+00
+0(
+#25000
+10
+1(
+#30000
+13
+1*
+00
+0(
+#35000
+1&
+12
+b1010 "
+b1010 <
+1#
+15
+0>
+b0 A
+10
+1(
+#40000
+00
+0(
+#45000
+0#
+05
+0&
+02
+0$
+04
+1!
+18
+b0 "
+b0 <
+06
+b0 ?
+10
+1(
+#50000
+b1111 7
+b1111 +
+b11 /
+b11 '
+1:
+1-
+00
+0(
+#55000
+1&
+12
+b11 "
+b11 <
+1$
+14
+0!
+08
+16
+1>
+b11 A
+10
+1(
+#60000
+0&
+02
+b0 "
+b0 <
+0$
+04
+11
+1)
+0:
+0-
+00
+0(
+#65000
+06
+b0 %
+b0 =
+b0 @
+0>
+b0 A
+10
+1(
+#70000
+00
+0(

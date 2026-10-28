@@ -1,0 +1,116 @@
+$date
+	Wed Oct 28 13:36:45 2026
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ps
+$end
+$scope module tb $end
+$var wire 48 ! segments [47:0] $end
+$var wire 4 " seg_valid [3:0] $end
+$var wire 3 # count [2:0] $end
+$var wire 1 $ align_error $end
+$var reg 4 % active [3:0] $end
+$var reg 64 & addresses [63:0] $end
+$scope module d $end
+$var wire 4 ' active [3:0] $end
+$var wire 64 ( addresses [63:0] $end
+$var reg 16 ) addr [15:0] $end
+$var reg 1 * align_error $end
+$var reg 3 + count [2:0] $end
+$var reg 1 , found $end
+$var reg 4 - seg_valid [3:0] $end
+$var reg 48 . segments [47:0] $end
+$var integer 32 / i [31:0] $end
+$var integer 32 0 j [31:0] $end
+$var integer 32 1 n [31:0] $end
+$upscope $end
+$scope task check $end
+$var reg 1 2 condition $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+$comment Show the parameter values. $end
+$dumpall
+$end
+#0
+$dumpvars
+x2
+b1 1
+b100 0
+b100 /
+b0 .
+b1 -
+1,
+b1 +
+0*
+b1100 )
+b1100000000000000100000000000000001000000000000000000 (
+b1111 '
+b1100000000000000100000000000000001000000000000000000 &
+b1111 %
+0$
+b1 #
+b1 "
+b0 !
+$end
+#10000
+b10000000000001000000000000 !
+b10000000000001000000000000 .
+b100 0
+b100 /
+b11 1
+0,
+b100000 )
+b11 #
+b11 +
+b111 "
+b111 -
+b100000000000000000000000000000000100000000000000000000 (
+b100000000000000000000000000000000100000000000000000000 &
+12
+#20000
+1$
+1*
+b100 /
+b0 1
+b0 )
+b0 #
+b0 +
+b0 "
+b0 -
+b0 !
+b0 .
+b11 '
+b11 %
+b100100000000000000000 (
+b100100000000000000000 &
+#30000
+b1 #
+b1 +
+1,
+b0 )
+b1 1
+b1 "
+b1 -
+b100 0
+b100 /
+0$
+0*
+b1 '
+b1 %
+#40000
+b0 )
+b100 0
+b100 /
+b0 1
+0,
+b0 #
+b0 +
+b0 "
+b0 -
+b0 '
+b0 %
+#50000

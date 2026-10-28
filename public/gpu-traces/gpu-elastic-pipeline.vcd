@@ -1,0 +1,250 @@
+$date
+	Wed Oct 28 13:36:44 2026
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ps
+$end
+$scope module tb $end
+$var wire 64 ! result [63:0] $end
+$var wire 1 " out_valid $end
+$var wire 8 # out_tag [7:0] $end
+$var wire 1 $ in_ready $end
+$var reg 32 % a [31:0] $end
+$var reg 4 & active [3:0] $end
+$var reg 32 ' b [31:0] $end
+$var reg 1 ( clk $end
+$var reg 1 ) flush $end
+$var reg 8 * in_tag [7:0] $end
+$var reg 1 + in_valid $end
+$var reg 1 , out_ready $end
+$var reg 1 - rst_n $end
+$scope module d $end
+$var wire 32 . a [31:0] $end
+$var wire 4 / active [3:0] $end
+$var wire 32 0 b [31:0] $end
+$var wire 1 1 clk $end
+$var wire 1 2 flush $end
+$var wire 1 3 in_ready $end
+$var wire 8 4 in_tag [7:0] $end
+$var wire 1 5 in_valid $end
+$var wire 1 6 out_ready $end
+$var wire 1 7 out_valid $end
+$var wire 1 8 ready0 $end
+$var wire 1 9 ready1 $end
+$var wire 1 : rst_n $end
+$var reg 32 ; a0 [31:0] $end
+$var reg 32 < b0 [31:0] $end
+$var reg 4 = m0 [3:0] $end
+$var reg 8 > out_tag [7:0] $end
+$var reg 64 ? result [63:0] $end
+$var reg 8 @ tag0 [7:0] $end
+$var reg 1 A v0 $end
+$var reg 1 B v1 $end
+$var reg 16 C x [15:0] $end
+$var reg 16 D y [15:0] $end
+$var integer 32 E i [31:0] $end
+$upscope $end
+$scope task check $end
+$var reg 1 F condition $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+$comment Show the parameter values. $end
+$dumpall
+$end
+#0
+$dumpvars
+xF
+bx E
+bx D
+bx C
+xB
+xA
+bx @
+bx ?
+bx >
+bx =
+bx <
+bx ;
+0:
+x9
+x8
+07
+06
+05
+b1000001 4
+03
+02
+01
+b11 0
+b1 /
+b10 .
+0-
+0,
+0+
+b1000001 *
+0)
+0(
+b11 '
+b1 &
+b10 %
+0$
+bx #
+0"
+bx !
+$end
+#5000
+19
+18
+b0 #
+b0 >
+b0 !
+b0 ?
+b0 @
+b0 =
+b0 <
+b0 ;
+0B
+0A
+11
+1(
+#10000
+1$
+13
+15
+1+
+1:
+1-
+01
+0(
+#15000
+b1000001 @
+b1 =
+b11 <
+b10 ;
+1A
+11
+1(
+#16000
+1F
+#20000
+b1000010 4
+b1000010 *
+b101 0
+b101 '
+b100 .
+b100 %
+01
+0(
+#25000
+0$
+03
+08
+09
+1"
+17
+b1000010 @
+b101 <
+b100 ;
+b110 !
+b110 ?
+b1000001 #
+b1000001 >
+1B
+b0 D
+b0 C
+b100 E
+11
+1(
+#30000
+05
+0+
+01
+0(
+#35000
+11
+1(
+#40000
+1$
+13
+18
+19
+16
+1,
+01
+0(
+#45000
+0A
+b10100 !
+b10100 ?
+b1000010 #
+b1000010 >
+b0 D
+b0 C
+b100 E
+11
+1(
+#50000
+01
+0(
+#55000
+0"
+07
+0B
+11
+1(
+#60000
+b100 0
+b100 '
+b11 .
+b11 %
+b1000011 4
+b1000011 *
+15
+1+
+01
+0(
+#65000
+b1000011 @
+b100 <
+b11 ;
+1A
+11
+1(
+#70000
+0$
+03
+12
+1)
+05
+0+
+01
+0(
+#75000
+b0 #
+b0 >
+b0 !
+b0 ?
+b0 @
+b0 =
+b0 <
+b0 ;
+0A
+11
+1(
+#80000
+1$
+13
+02
+0)
+01
+0(
+#85000
+11
+1(
+#90000
+01
+0(

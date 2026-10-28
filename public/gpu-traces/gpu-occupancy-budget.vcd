@@ -1,0 +1,101 @@
+$date
+	Wed Oct 28 13:36:45 2026
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ps
+$end
+$scope module tb $end
+$var wire 5 ! threads [4:0] $end
+$var wire 3 " limiting [2:0] $end
+$var wire 3 # groups [2:0] $end
+$var reg 5 $ regs_per_thread [4:0] $end
+$var reg 6 % smem_per_group [5:0] $end
+$scope module d $end
+$var wire 5 & regs_per_thread [4:0] $end
+$var wire 6 ' smem_per_group [5:0] $end
+$var reg 3 ( groups [2:0] $end
+$var reg 3 ) limiting [2:0] $end
+$var reg 5 * threads [4:0] $end
+$var integer 32 + g [31:0] $end
+$var integer 32 , rb [31:0] $end
+$var integer 32 - sb [31:0] $end
+$upscope $end
+$scope task check $end
+$var reg 1 . condition $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+$comment Show the parameter values. $end
+$dumpall
+$end
+#0
+$dumpvars
+x.
+b100001 -
+b10 ,
+b10 +
+b1000 *
+b10 )
+b10 (
+b0 '
+b1000 &
+b0 %
+b1000 $
+b10 #
+b10 "
+b1000 !
+$end
+#10000
+b100 +
+b100 -
+b100 ,
+b111 "
+b111 )
+b10000 !
+b10000 *
+b100 #
+b100 (
+b1000 '
+b1000 %
+b100 &
+b100 $
+1.
+#20000
+b0 +
+b0 -
+b0 ,
+b0 "
+b0 )
+b0 !
+b0 *
+b0 #
+b0 (
+b0 &
+b0 $
+#30000
+b100 "
+b100 )
+b0 +
+b100 ,
+b101000 '
+b101000 %
+b100 &
+b100 $
+#40000
+b100 !
+b100 *
+b1 #
+b1 (
+b1 +
+b100001 -
+b1 ,
+b10 "
+b10 )
+b0 '
+b0 %
+b10000 &
+b10000 $
+#50000

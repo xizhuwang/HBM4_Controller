@@ -1,0 +1,38 @@
+{
+  "gpu-masked-simd-alu": {
+    "contract": "3f63bfa6d65c401c4f7a37aaa7dfb638ee797e2c56c3cda03fafd2f3bb0b3b9c",
+    "vcd": "afbd0195321f672777496546049ea8650086862105e28384aa511f575b21df4e"
+  },
+  "gpu-elastic-pipeline": {
+    "contract": "ce256e699943d2297f3251d99ab4a469b420c046bd99fbe7d3562ee6d09a7bd9",
+    "vcd": "b7174bc686d4361383eb81853e0c0d1d2e1725d1a77bfe68d6ae24c8e60ef0bc"
+  },
+  "gpu-register-scoreboard": {
+    "contract": "d3a4721f73e51f4ed9b3b8a84aad61ef8bde8cc000b20bfa1e02b52821112099",
+    "vcd": "9f6af31b7ab979bf97a235ae0d5947a47ddb594c0b5e76d7f8758d526137711a"
+  },
+  "gpu-ready-warp-scheduler": {
+    "contract": "db32987e4bc568441d5f0a70bf9599c8a638ae1feec4b0a6df4c6a9f86737140",
+    "vcd": "e681902dad8ac1e55b8e96a12afe35ed18c83a62499c3c69811472abc3657ad6"
+  },
+  "gpu-divergence-sequencer": {
+    "contract": "795b653941ce41ad9033b23fe0b03ae98c295e443c508c9b0c15ad125feebe8d",
+    "vcd": "bd8726c508149bdad6bf2d382c76b829a506a138f1a63308df05333ba2817298"
+  },
+  "gpu-occupancy-budget": {
+    "contract": "4ab66e088a1aa352da4619dd246293965e2d881109dac55c0b3ae37b653c6aa4",
+    "vcd": "94ade806e959748c100a3cc8857d93d32d9b7b0b5142f3ab13364c892cea9502"
+  },
+  "gpu-memory-coalescer": {
+    "contract": "45a5ef821744af7bdb8184a0f79bdc088f75919c0d96310ce170d07cb8b83ad1",
+    "vcd": "f4ef257eb7721f7e3fb186ff7865e27dcf39ab0d4ee3d78db4c435536358e3c4"
+  },
+  "gpu-shared-bank-conflicts": {
+    "contract": "1354edb41087bac9ba15649e8a33c48c8f6cf2a25885fbcfe3392de89121ff42",
+    "vcd": "240928995b5cd9123f2f0d9e02996e04ad4b08092b318ee4c1daf3160cb1a72c"
+  },
+  "gpu-stall-counters": {
+    "contract": "fdf8252e0791f8ed2ff32660c0a14e7b841a913be7893dd9a17a1b056dd826ec",
+    "vcd": "aae03422a3e46420c3be4893fe902f3d7b31a7fdaf3ec6641064a890dfbe1415"
+  }
+}

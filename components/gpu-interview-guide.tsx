@@ -4,6 +4,7 @@ import { localize, type Locale } from '@/lib/challenges';
 import { gpuTopics, gpuSources, gpuLabLabels } from '@/lib/gpu-interview';
 import { GpuConceptVisual } from './gpu-concept-visual';
 import { gpuAnswerChecks } from '@/lib/gpu-answer-checks';
+import { GpuGlossary } from './gpu-glossary';
 
 const topicLabels = ['Shader','SIMD / SIMT','Divergence','Scoreboard','Latency hiding','Occupancy','Memory','Bottlenecks'];
 const icons = [Cpu,Layers,GitBranch,ListChecks,Timer,Gauge,Database,ChartColumn];
@@ -24,6 +25,7 @@ export function GpuInterviewGuide({ locale, selectedId, onSelect }: { locale: Lo
       <div className="gpu-stage-top"><span>{String(index+1).padStart(2,'0')}</span><h3>{localize(topic.title,locale)}</h3></div>
       <GpuConceptVisual topic={topic.id} locale={locale} />
       <p className="gpu-topic-goal">{localize(topic.goal,locale)}</p>
+      <GpuGlossary key={topic.id} topic={topic.id} locale={locale}/>
       <div className="gpu-practice-row"><span>{zh?'動手做':'PRACTICE'}</span>{topic.labs.map(id=><button key={id} type="button" aria-current={id===selectedId?'true':undefined} onClick={()=>onSelect(id)}>{localize(gpuLabLabels[id],locale)}<ArrowRight /></button>)}</div>
       <div className="gpu-compact-questions"><h4>{zh?'問題與解答':'Questions & answers'}</h4>{topic.questions.map((question,i)=>{
         const assessment=gpuAnswerChecks[topic.id][i];

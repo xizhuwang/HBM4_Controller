@@ -67,3 +67,13 @@ Passing a lab proves only the contract encoded in that lab. A production control
 - versioned waiver ownership and zero unexplained failures.
 
 The complete silicon boundary is documented in `docs/SIGNOFF_BOUNDARY.md`.
+
+
+## GPU reference learning material
+
+- `pnpm traces:gpu` regenerates nine small reference VCDs using the same pinned Icarus engine. Each teaching testbench self-checks its stated scenario.
+- Every nonempty line of each GPU reference has a bilingual explanation; ports use the precise micro-spec definitions.
+- Reference traces are checked against source/testbench hashes and saved-VCD integrity hashes. The teaching scenarios also run during regression.
+- Reference diagrams are clearly separate from the learner's regression waveforms. Combinational labs explicitly have no clock.
+- Glossary terms and per-topic term IDs must be complete and resolvable.
+- Browser acceptance: an unsolved exercise can open its complete reference; the GPU line/code/timing views work; switching back preserves edited code and progress; copying is explicit; reference viewing does not award a pass. Shader/LSU definitions and glossary search work in both languages.

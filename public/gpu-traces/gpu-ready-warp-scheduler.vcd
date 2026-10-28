@@ -1,0 +1,195 @@
+$date
+	Wed Oct 28 13:36:44 2026
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ps
+$end
+$scope module tb $end
+$var wire 2 ! rr [1:0] $end
+$var wire 4 " grant [3:0] $end
+$var reg 4 # barrier [3:0] $end
+$var reg 1 $ clk $end
+$var reg 1 % commit $end
+$var reg 4 & dep_blocked [3:0] $end
+$var reg 4 ' fu_ready [3:0] $end
+$var reg 4 ( resident [3:0] $end
+$var reg 1 ) rst_n $end
+$scope module d $end
+$var wire 4 * barrier [3:0] $end
+$var wire 1 + clk $end
+$var wire 1 , commit $end
+$var wire 4 - dep_blocked [3:0] $end
+$var wire 4 . fu_ready [3:0] $end
+$var wire 4 / resident [3:0] $end
+$var wire 1 0 rst_n $end
+$var reg 4 1 eligible [3:0] $end
+$var reg 1 2 found $end
+$var reg 4 3 grant [3:0] $end
+$var reg 2 4 rr [1:0] $end
+$var reg 2 5 winner [1:0] $end
+$var integer 32 6 j [31:0] $end
+$var integer 32 7 k [31:0] $end
+$upscope $end
+$scope task check $end
+$var reg 1 8 condition $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+$comment Show the parameter values. $end
+$dumpall
+$end
+#0
+$dumpvars
+x8
+b100 7
+bx 6
+b0 5
+bx 4
+b0 3
+02
+b1110 1
+00
+b1111 /
+b1111 .
+b1 -
+0,
+0+
+b0 *
+0)
+b1111 (
+b1111 '
+b1 &
+0%
+0$
+b0 #
+b0 "
+bx !
+$end
+#5000
+b100 7
+b11 6
+b0 !
+b0 4
+1+
+1$
+#10000
+12
+b1 5
+b10 "
+b10 3
+b100 7
+b11 6
+10
+1)
+0+
+0$
+#11000
+18
+#15000
+1+
+1$
+#20000
+1,
+1%
+0+
+0$
+#25000
+b100 7
+b1 6
+b10 5
+12
+b100 "
+b100 3
+b10 !
+b10 4
+1+
+1$
+#30000
+b100 7
+b1 6
+b11 5
+12
+b1000 "
+b1000 3
+b1011 1
+b100 -
+b100 &
+0+
+0$
+#35000
+b100 7
+b11 6
+b0 5
+12
+b1 "
+b1 3
+b0 !
+b0 4
+1+
+1$
+#40000
+b100 7
+b11 6
+02
+b0 "
+b0 3
+b0 1
+0,
+0%
+b0 /
+b0 (
+0+
+0$
+#45000
+1+
+1$
+#50000
+12
+b1 "
+b1 3
+b100 7
+b11 6
+b1111 1
+1,
+1%
+b0 -
+b0 &
+b1111 /
+b1111 (
+0+
+0$
+#55000
+b1 5
+b100 7
+b0 6
+12
+b10 "
+b10 3
+b1 !
+b1 4
+1+
+1$
+#60000
+b0 6
+b100 7
+b0 5
+02
+b0 "
+b0 3
+00
+0)
+0+
+0$
+#65000
+b11 6
+b100 7
+b0 !
+b0 4
+1+
+1$
+#70000
+0+
+0$
