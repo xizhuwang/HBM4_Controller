@@ -400,6 +400,7 @@ export default function Home() {
 
           {view === 'interview' && current.track === 'gpu' && <GpuInterviewGuide locale={locale} selectedId={current.id} onSelect={selectChallenge} />}
           {view === 'spec' && current.track === 'gpu' && <button type="button" className="gpu-guide-entry" onClick={() => setView('interview')}><BookOpen /><span>{locale === 'zh' ? '先看 GPU 面試問答：8 個主題、參考回答與追問' : 'Open GPU interview guide: 8 topics, answers, and follow-ups'}</span><ChevronRight /></button>}
+          {view === 'lab' && panels.right && area && <div className="workspace-result" aria-live="polite"><strong>Generic Synthesis · {area.total} {text.cells}</strong>{area.referenceTotal != null && <p>reference {area.referenceTotal} · Δ {area.total - area.referenceTotal}</p>}</div>}
           {view === 'lab' && panels.right && result && <details className={`workspace-result ${result.ok ? 'pass' : 'fail'}`} open={!result.ok}><summary>{result.ok ? text.passed : text.failed} · {result.phase}</summary><pre>{result.console.replaceAll('@@PASS@@', '').replaceAll('@@FAIL@@', '').trim()}</pre></details>}
           {view === 'spec' && <LabSpecSheet challenge={current} locale={locale} onStart={openLab} />}
 
