@@ -1,6 +1,13 @@
 import type { Localized } from './challenges';
 
 const b = (zh: string, en: string): Localized => ({ zh, en });
+export const gpuLabLabels: Record<string,Localized> = {
+  'gpu-masked-simd-alu': b('遮罩運算單元','Masked ALU'), 'gpu-elastic-pipeline': b('乘法流水線','Multiply pipeline'),
+  'gpu-register-scoreboard': b('暫存器相依追蹤','Register scoreboard'), 'gpu-ready-warp-scheduler': b('Ready-group 排程','Ready-group scheduler'),
+  'gpu-divergence-sequencer': b('分支遮罩控制','Branch masks'), 'gpu-occupancy-budget': b('駐留資源計算','Residency budget'),
+  'gpu-memory-coalescer': b('位址合併','Address coalescing'), 'gpu-shared-bank-conflicts': b('Bank conflict','Bank conflicts'),
+  'gpu-stall-counters': b('效能計數器','Performance counters'),
+};
 export const gpuSources = [
   { title: 'AMD GPUOpen · Occupancy explained', url: 'https://gpuopen.com/learn/occupancy-explained/' },
   { title: 'NVIDIA · CUDA Programming Guide', url: 'https://docs.nvidia.com/cuda/cuda-programming-guide/' },

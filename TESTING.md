@@ -49,8 +49,8 @@ Before tagging a release, check both desktop and narrow/mobile widths:
 7. Reload preserves local progress and edited code.
 8. The site works under `/HBM4_Controller/`, not only at domain root.
 9. Source, license, privacy, and third-party links resolve.
-10. Both panels collapse independently, focus mode expands the workbench, preferences survive reload, and results remain available with the mentor panel hidden.
-11. The GPU guide has eight topics and 24 expandable answers; topic anchors and links to all nine executable exercises work.
+10. The layout toolbar contains only the Focus mode toggle, which controls both panels; preferences survive reload and results remain available when focused.
+11. The GPU guide has eight topic selectors and 24 total expandable reference answers, assessment criteria, and follow-up answers, showing only one topic at a time. The first answer is open by default and the remaining questions have explicit Show answer controls. Each topic has a visual; SIMD masks, scoreboard completion, latency hiding, occupancy and memory controls update correctly. Links to all nine executable exercises work.
 12. GPU lab URLs restore the selected exercise, and source links explain vendor/teaching-model boundaries.
 13. The page never describes a browser pass as CDC, STA, APR, protocol-compliance, or silicon sign-off.
 

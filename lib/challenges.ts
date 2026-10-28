@@ -34,7 +34,7 @@ export const tracks: { id: TrackId; label: Localized; accent: string }[] = [
   { id: 'lpddr', label: { zh: 'LPDDR Controller', en: 'LPDDR Controller' }, accent: 'lpddr' },
   { id: 'gddr', label: { zh: 'GDDR Controller', en: 'GDDR Controller' }, accent: 'gddr' },
   { id: 'pcie', label: { zh: 'PCIe Controller', en: 'PCIe Controller' }, accent: 'pcie' },
-  { id: 'gpu', label: { zh: 'GPU 面試與 RTL', en: 'GPU interview & RTL' }, accent: 'gpu' },
+  { id: 'gpu', label: { zh: 'GPU', en: 'GPU' }, accent: 'gpu' },
 ];
 
 // The foundation curriculum remains exclusively in rtl-interview-lab.

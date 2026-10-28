@@ -1,21 +1,44 @@
-import { BookOpen, CheckCircle2, ChevronRight, Code2, ExternalLink } from 'lucide-react';
-import { challenges, localize, type Locale } from '@/lib/challenges';
-import { gpuTopics, gpuSources } from '@/lib/gpu-interview';
+import { useState } from 'react';
+import { ArrowRight, Cpu, Layers, GitBranch, ListChecks, Timer, Gauge, Database, ChartColumn, ExternalLink } from 'lucide-react';
+import { localize, type Locale } from '@/lib/challenges';
+import { gpuTopics, gpuSources, gpuLabLabels } from '@/lib/gpu-interview';
+import { GpuConceptVisual } from './gpu-concept-visual';
+import { gpuAnswerChecks } from '@/lib/gpu-answer-checks';
+
+const topicLabels = ['Shader','SIMD / SIMT','Divergence','Scoreboard','Latency hiding','Occupancy','Memory','Bottlenecks'];
+const icons = [Cpu,Layers,GitBranch,ListChecks,Timer,Gauge,Database,ChartColumn];
 
 export function GpuInterviewGuide({ locale, selectedId, onSelect }: { locale: Locale; selectedId: string; onSelect: (id: string) => void }) {
-  const zh = locale === 'zh';
-  return <section className="gpu-guide" aria-labelledby="gpu-guide-title">
-    <header className="gpu-guide-hero"><span>GPU INTERVIEW / RTL PRACTICE</span><h3 id="gpu-guide-title">{zh ? '從概念，走到能解釋的 RTL' : 'From concepts to RTL you can explain'}</h3><p>{zh ? '8 個核心主題 · 24 題回答與追問 · 9 個可執行練習。先用自己的話回答，再展開參考答案；最後用 RTL、測試與波形證明。' : '8 core topics · 24 answers and follow-ups · 9 executable labs. Answer in your own words before opening the reference, then demonstrate with RTL, tests, and waveforms.'}</p><p className="gpu-model-note">{zh ? '所有 lane、group、bank 與 segment 數字都是題目指定的教學值；不代表任何廠商實作。' : 'Lane, group, bank, and segment sizes are teaching values specified per lab, not vendor implementation claims.'}</p></header>
-    <nav className="gpu-topic-nav" aria-label={zh ? 'GPU 面試主題' : 'GPU interview topics'}>{gpuTopics.map((topic, i) => <a key={topic.id} href={`#gpu-topic-${topic.id}`}><span>{String(i+1).padStart(2,'0')}</span>{localize(topic.title,locale)}</a>)}</nav>
-    <div className="gpu-study-plan"><BookOpen /><div><strong>{zh ? '準備順序' : 'Study sequence'}</strong><p>{zh ? '第一輪：資料流／SIMD／pipeline → 第二輪：scoreboard／排程／divergence → 第三輪：occupancy／memory／瓶頸。每題練 60 秒短答，再練兩層追問；實作以「不用看答案畫出狀態與逐拍行為」為驗收。' : 'Pass 1: dataflow, SIMD, pipeline. Pass 2: scoreboard, scheduling, divergence. Pass 3: occupancy, memory, bottlenecks. Practice a 60-second answer and two follow-ups; finish by drawing state and cycle behavior without the reference.'}</p></div></div>
-    {gpuTopics.map((topic,i) => <article className="gpu-topic" id={`gpu-topic-${topic.id}`} key={topic.id}>
-      <header><span>{String(i+1).padStart(2,'0')}</span><div><h3>{localize(topic.title,locale)}</h3><p>{localize(topic.goal,locale)}</p></div></header>
-      <ol className="gpu-flow" aria-label={zh ? '概念流程圖' : 'Conceptual flow diagram'}>{topic.diagram.map((step,j) => <li key={j}><span>{localize(step,locale)}</span>{j<topic.diagram.length-1 && <ChevronRight aria-hidden="true" />}</li>)}</ol>
-      <p className="gpu-trap"><strong>{zh ? '容易誤答：' : 'Common pitfall: '}</strong>{localize(topic.trap,locale)}</p>
-      <div className="gpu-question-list">{topic.questions.map((question,j) => <details key={j}><summary><span>{i+1}.{j+1}</span>{localize(question.q,locale)}</summary><div className="gpu-answer"><h4>{zh ? '回答方式' : 'Suggested answer'}</h4><p>{localize(question.answer,locale)}</p><h4>{zh ? '用例子說明' : 'Worked example'}</h4><p>{localize(question.example,locale)}</p><div className="gpu-followup"><strong>{zh ? '繼續追問' : 'Follow-up'}</strong><p>{localize(question.followup,locale)}</p></div></div></details>)}</div>
-      <div className="gpu-lab-links"><strong><Code2 />{zh ? '用 RTL 驗證' : 'Prove it in RTL'}</strong>{topic.labs.map(id => <button key={id} type="button" aria-current={id===selectedId ? 'true' : undefined} onClick={() => onSelect(id)}>{localize(challenges.find(c=>c.id===id)!.title,locale)}<ChevronRight /></button>)}</div>
-      <div className="gpu-source-links">{topic.sources.map(index => <a key={index} href={gpuSources[index].url} target="_blank" rel="noreferrer">{gpuSources[index].title}<ExternalLink /></a>)}</div>
-    </article>)}
-    <footer className="gpu-readiness"><CheckCircle2 /><div><h3>{zh ? '真的會了，應該能做到' : 'Ready means you can demonstrate'}</h3><ul><li>{zh ? '不看答案，畫出 datapath、mask、tag、ready/valid 與回饋關係。' : 'Draw datapath, masks, tags, handshakes, and feedback without the reference.'}</li><li>{zh ? '手推正常、stall、flush、相依解除各一個案例，指出 state 在哪個 edge 改變。' : 'Walk through normal flow, stalls, flushes, and dependency release with exact state-update edges.'}</li><li>{zh ? '測試通過後，故意加入一個錯誤並解釋哪個測試、哪段波形應抓到它。' : 'After passing, inject one bug and identify the test and waveform that should catch it.'}</li><li>{zh ? '說明實作範圍、PPA 取捨與未建模的真實 GPU 功能。' : 'Explain implementation scope, PPA tradeoffs, and real-GPU features the model omits.'}</li></ul></div></footer>
+  const zh=locale==='zh';
+  const [selected,setSelected]=useState(()=>{
+    const id=typeof window!=='undefined'?window.location.hash.replace('#gpu-topic-',''):'';
+    return gpuTopics.some(item=>item.id===id)?id:'shader';
+  });
+  const topic=gpuTopics.find(item=>item.id===selected)!;
+  const index=gpuTopics.indexOf(topic);
+  const select=(id:string)=>{setSelected(id);const url=new URL(window.location.href);url.hash=`gpu-topic-${id}`;window.history.replaceState(null,'',url);};
+  return <section className="gpu-visual-guide" aria-labelledby="gpu-guide-title">
+    <header className="gpu-visual-heading"><div><h2 id="gpu-guide-title">GPU</h2><p>{zh?'先看懂電路，再動手實作。':'Understand the circuit. Then build it.'}</p></div><span>08 {zh?'個主題':'TOPICS'}</span></header>
+    <nav className="gpu-topic-selector" aria-label={zh?'GPU 主題':'GPU topics'}>{gpuTopics.map((item,i)=>{const Icon=icons[i];return <button key={item.id} type="button" aria-pressed={selected===item.id} aria-controls="gpu-topic-stage" onClick={()=>select(item.id)}><Icon /><span>{zh&&i===7?'瓶頸分析':topicLabels[i]}</span></button>;})}</nav>
+    <article className="gpu-topic-stage" id="gpu-topic-stage" key={topic.id}>
+      <div className="gpu-stage-top"><span>{String(index+1).padStart(2,'0')}</span><h3>{localize(topic.title,locale)}</h3></div>
+      <GpuConceptVisual topic={topic.id} locale={locale} />
+      <p className="gpu-topic-goal">{localize(topic.goal,locale)}</p>
+      <div className="gpu-practice-row"><span>{zh?'動手做':'PRACTICE'}</span>{topic.labs.map(id=><button key={id} type="button" aria-current={id===selectedId?'true':undefined} onClick={()=>onSelect(id)}>{localize(gpuLabLabels[id],locale)}<ArrowRight /></button>)}</div>
+      <div className="gpu-compact-questions"><h4>{zh?'問題與解答':'Questions & answers'}</h4>{topic.questions.map((question,i)=>{
+        const assessment=gpuAnswerChecks[topic.id][i];
+        return <details key={i} open={i===0}>
+          <summary><span>0{i+1}</span><span className="gpu-question-text">{localize(question.q,locale)}</span><span className="gpu-answer-toggle"><span className="when-closed">{zh?'查看答案':'Show answer'}</span><span className="when-open">{zh?'收合答案':'Hide answer'}</span></span></summary>
+          <div className="gpu-answer">
+            <h5>{zh?'參考答案':'Reference answer'}</h5><p>{localize(question.answer,locale)}</p>
+            <div className="gpu-example"><span>{zh?'用例子驗證':'WORKED EXAMPLE'}</span><p>{localize(question.example,locale)}</p></div>
+            <div className="gpu-answer-checks"><h5>{zh?'答對的關鍵':'Check your answer'}</h5><ul>{assessment.checks.map((check,j)=><li key={j}>{localize(check,locale)}</li>)}</ul></div>
+            <div className="gpu-followup"><h5>{zh?'追問':'Follow-up'}</h5><p className="gpu-followup-question">{localize(question.followup,locale)}</p><h5>{zh?'追問解答':'Follow-up answer'}</h5><p>{localize(assessment.followup,locale)}</p></div>
+          </div>
+        </details>;
+      })}</div>
+      <details className="gpu-footnote"><summary>{zh?'常見誤解與參考資料':'Pitfalls & references'}</summary><p>{localize(topic.trap,locale)}</p><div className="gpu-source-links">{topic.sources.map(i=><a key={i} href={gpuSources[i].url} target="_blank" rel="noreferrer">{gpuSources[i].title}<ExternalLink /></a>)}</div><p>{zh?'圖中的 lane、group、bank、segment 是縮小教學值，不代表廠商實作。':'Lane, group, bank and segment sizes shown are reduced teaching values, not vendor implementations.'}</p></details>
+    </article>
+    <footer className="gpu-next-topic"><span>{zh?'下一個主題':'NEXT TOPIC'}</span><button type="button" onClick={()=>select(gpuTopics[(index+1)%gpuTopics.length].id)}>{localize(gpuTopics[(index+1)%gpuTopics.length].title,locale)}<ArrowRight /></button></footer>
   </section>;
 }

@@ -1,6 +1,9 @@
 import { ArrowRight, BookMarked, Braces, Clock3, ListOrdered, ShieldCheck, TableProperties } from 'lucide-react';
 
 import { HbmLessonGuide } from '@/components/hbm-lesson-guide';
+import { GpuConceptVisual } from '@/components/gpu-concept-visual';
+import { ArchitectureDiagram } from '@/components/architecture-diagram';
+import { labContext } from '@/lib/architectures';
 import { localize, type Challenge, type Locale } from '@/lib/challenges';
 import { labReferences, labSpecs, parseModulePorts } from '@/lib/lab-specs';
 
@@ -14,14 +17,17 @@ export function LabSpecSheet({ challenge, locale, onStart }: { challenge: Challe
   const reference = labReferences[challenge.id];
   const text = labels[locale];
   const ports = parseModulePorts(challenge.starter);
+  const gpuTopic: Record<string,string> = { 'gpu-masked-simd-alu':'simt', 'gpu-elastic-pipeline':'shader', 'gpu-register-scoreboard':'scoreboard', 'gpu-ready-warp-scheduler':'latency', 'gpu-divergence-sequencer':'divergence', 'gpu-occupancy-budget':'occupancy', 'gpu-memory-coalescer':'memory', 'gpu-shared-bank-conflicts':'banks', 'gpu-stall-counters':'bottleneck' };
 
   return (
     <section className="spec-sheet">
       {challenge.track === 'hbm' && <HbmLessonGuide challenge={challenge} locale={locale} />}
       <header className="spec-hero">
         <div><span><Braces />{text.title}</span><h3>{text.purpose}</h3><p>{localize(item.purpose, locale)}</p></div>
-        <button type="button" onClick={onStart}>{text.start}<ArrowRight /></button>
+        {challenge.track !== 'gpu' && <button type="button" onClick={onStart}>{text.start}<ArrowRight /></button>}
       </header>
+
+      {challenge.track === 'gpu' && <div className="gpu-spec-visual"><GpuConceptVisual key={challenge.id} topic={gpuTopic[challenge.id]} locale={locale}/><details><summary>{locale === 'zh' ? '查看完整架構與回饋' : 'Full architecture & feedback'}</summary><ArchitectureDiagram track="gpu" activeBlock={labContext[challenge.id].blockId} locale={locale}/></details></div>}
 
       {reference && <div className="spec-reference"><BookMarked /><div><span>{text.reference}</span><strong>{localize(reference.source, locale)}</strong><p>{localize(reference.topics, locale)}</p><small>{localize(reference.profile, locale)}</small></div></div>}
 

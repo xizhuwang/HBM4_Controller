@@ -32,6 +32,7 @@ const { architectures, labContext } = await loadTs('../lib/architectures.ts');
 const { labSpecs, labReferences, parseModulePorts } = await loadTs('../lib/lab-specs.ts');
 const { hbmLearningGuides, hbmTerms } = await loadTs('../lib/hbm-learning-guides.ts');
 const { gpuTopics, gpuSources } = await loadTs('../lib/gpu-interview.ts');
+const { gpuAnswerChecks } = await loadTs('../lib/gpu-answer-checks.ts');
 let checks = 0;
 
 function verify(ok, name) {
@@ -77,6 +78,7 @@ verify(challenges.filter((challenge) => challenge.track === 'gpu').length === 9,
 verify(gpuTopics.length === 8 && gpuTopics.reduce((n, topic) => n + topic.questions.length, 0) === 24, 'GPU interview guide has 8 topics and 24 questions');
 verify(new Set(gpuTopics.map(topic => topic.id)).size === gpuTopics.length, 'GPU topic anchors are unique');
 for (const topic of gpuTopics) {
+  verify(gpuAnswerChecks[topic.id]?.length === topic.questions.length && gpuAnswerChecks[topic.id].every(item => item.followup?.zh && item.followup?.en && item.checks.length >= 2 && item.checks.every(check => check.zh && check.en)), `${topic.id} has answer criteria and complete bilingual follow-up answers`);
   verify([topic.title, topic.goal, topic.trap, ...topic.diagram, ...topic.questions.flatMap(item => [item.q, item.answer, item.example, item.followup])].every(item => item?.zh && item?.en), `${topic.id} GPU guide is bilingual with answers, examples, and follow-ups`);
   verify(topic.labs.every(id => challenges.some(item => item.id === id && item.track === 'gpu')), `${topic.id} GPU guide links resolve to RTL exercises`);
   verify(topic.sources.length > 0 && topic.sources.every(index => /^https:\/\//.test(gpuSources[index]?.url ?? '')), `${topic.id} GPU guide has primary-source links`);

@@ -19,15 +19,15 @@
 | LPDDR（4 題） | 低功耗序列、初始化/training handshake、DVFS quiesce、controller gate | traffic drain、power/isolation 與 PHY status 的安全順序 |
 | GDDR（4 題） | bus turnaround、command parity、CRC retry ownership、issue capstone | 高速共享資料匯流排與可靠度責任 |
 | PCIe（9 題） | TLP route、credits、tags、replay、completion reorder、LTSSM、admission capstone | Transaction/Data Link/MAC 分層與資源原子配置 |
-| GPU（9 題／8 主題） | shader、SIMD/SIMT、divergence、scoreboard、latency hiding、occupancy、memory 與瓶頸分析 | 24 題雙語參考回答／追問、mask ALU、elastic pipeline、排程、coalescer、bank conflict 與 counters |
+| GPU（9 題／8 主題） | shader、SIMD/SIMT、divergence、scoreboard、latency hiding、occupancy、memory 與瓶頸分析 | 24 題雙語參考答案、檢查點與追問解答、mask ALU、elastic pipeline、排程、coalescer、bank conflict 與 counters |
 
-GPU 面試入口：[GPU 面試問答](https://xizhuwang.github.io/HBM4_Controller/?track=gpu&view=interview)。
+GPU 入口：[GPU](https://xizhuwang.github.io/HBM4_Controller/?track=gpu&view=interview)。
 
 完整的修課順序、每階段輸出與面試證據請見 [課程地圖](docs/CURRICULUM.md)。
 
 ### 線上互動功能
 
-- 左右側欄可獨立收合；專注模式收合兩欄，設定會保存在瀏覽器。即使結果欄收合，RTL 工作台仍可看到 regression 訊息與波形。
+- 上排只保留專注模式，同時切換左右側欄；設定會保存在瀏覽器。觀念頁一次聚焦一個主題，使用可操作圖解，詳細問題按需展開。結果欄收合後，工作台仍可看到 regression 訊息與波形。
 - 每題先提供完整 micro-spec：功能邊界、全部 port 的方向／位寬／語意、clock/reset、ordered behavior、同拍 priority、逐拍範例與假設。
 - 每個 HBM 題目另外顯示 JESD270-4A 條款追溯、在完整 controller 的電路位置，以及教學縮小值與產品參數的邊界；文字為重述，不重製標準表格。
 - 既有 17 個 HBM Controller 題目先用白話目標、生活比喻與名詞卡建立心智模型；新增 14 題則補齊 PHY interface、RAS、repair、package 與 system performance 的可執行合約。
